@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Magik Swipe</title>
+  <style>
+    body, html { margin:0; padding:0; overflow:hidden; height:100%; background:#000; font-family:system-ui; }
+    #selector { position:fixed; top:0; left:0; right:0; padding:20px; background:#111; z-index:100; text-align:center; }
+    select { font-size:24px; padding:15px; border-radius:50px; }
+    #gallery { height:100vh; display:flex; align-items:center; justify-content:center; position:relative; }
+    .card { position:absolute; width:90vw; max-width:520px; height:80vh; border-radius:30px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.7); transition:all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); background:#fff; }
+    .card img, .card video { width:100%; height:100%; object-fit:cover; }
+    .title { position:absolute; bottom:30px; left:0; right:0; font-size:32px; font-weight:bold; text-shadow:2px 2px 10px black; color:white; text-align:center; }
+    .hidden { transform:translateX(120vw) rotate(40deg); opacity:0; }
+  </style>
+</head>
+<body>
+  <div id="selector">
+    <select id="themeSelect" onchange="loadUniverse(this.value)">
+      <option value="">Choisis un univers magique ✨</option>
+    </select>
+  </div>
+
+  <div id="gallery"></div>
+
+  <script>
+    // Charge la liste des univers disponibles
+    async function loadThemes() {
+      const response = await fetch("univers/list.json");
+      const themes = await response.json();
+      const select = document.getElementById("themeSelect");
+      themes.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.folder;
+        opt.textContent = t.name;
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadUniverse(folder) {
+      if (!folder) return;
+      document.getElementById("selector").style.display = "none";
+      const data = await fetch(`univers/${folder}/data.json`).then(r => r.json());
+
+      const gallery = document.getElementById("gallery");
+      gallery.innerHTML = "";
+
+      data.items.forEach((item, i) => {
+        const card = document.createElement("div");
+        card.className = "card hidden";
+        card.innerHTML = `
+          <img src="univers/${folder}/${item.image}" loading="lazy">
+          <div class="title">${item.title}</div>
+        `;
+        gallery.appendChild(card);
+
+        // Tap = vidéo (placeholder pour l'instant)
+        card.onclick = () => {
+          const video = item.video ? `univers/${folder}/${item.video}` : "placeholder_video.mp4"; // v2
+          const fullscreen = document.createElement("video");
+          fullscreen.src = video;
+          fullscreen.controls = true;
+          fullscreen.autoplay = true;
+          fullscreen.style = "position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:1000; object-fit:contain; background:black;";
+          document.body.appendChild(fullscreen);
+          fullscreen.onclick = () => fullscreen.remove();
+        };
+
+        setTimeout(() => card.classList.remove("hidden"), i * 200);
+      });
+
+      // Swipe horizontal
+      let current = 0;
+      const cards = gallery.children;
+      function show(n) {
+        Array.from(cards).forEach((c, i) => {
+          c.style.transform = `translateX(${(i - n) * 110}vw) scale(${i === n ? 1 : 0.85}) rotate(${(i - n) * 15}deg)`;
+          c.style.zIndex = i === n ? 10 : 0;
+        });
+      }
+      show(0);
+
+      let startX;
+      gallery.addEventListener("touchstart", e => startX = e.touches[0].clientX);
+      gallery.addEventListener("touchend", e => {
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 50) {
+          current = dx > 0 ? Math.max(0, current - 1) : Math.min(cards.length - 1, current + 1);
+          show(current);
+        }
+      });
+    }
+
+    // Créer list.json automatiquement (lance une fois)
+    // Node.js quick script ou manuel : [{"name": "Véhicules Magiques", "folder": "vehicules"}, ...]
+    loadThemes();
+  </script>
+</body>
+</html>
