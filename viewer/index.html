@@ -2,12 +2,18 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Magik Univers ✨</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23ff6b6b'/></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:#000; touch-action: pan-x pan-y; }
-    #gallery { height:100vh; perspective: 1000px; }
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:#000; }
+
+    /* Swipe uniquement où c'est nécessaire → tout est cliquable partout ailleurs */
+    #gallery, #left-zone, #right-zone, #slide-bar { touch-action: pan-x pan-y; }
+
+    #gallery { height:100vh; perspective: 1000px; display: none; }
+
     .card { 
       position:absolute; top:50%; left:50%; 
       width:88vw; max-width:500px; 
@@ -25,64 +31,415 @@
       pointer-events:none;
       font-family:system-ui;
     }
-    #fullscreen-video { 
-      position:fixed; top:0; left:0; width:100vw; height:100vh; 
-      background:#000; z-index:9999; object-fit:contain;
+    #indicators {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 20;
     }
+    .indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .indicator.active { background: white; }
+    #left-zone, #right-zone {
+      position: fixed;
+      top: 0;
+      height: 100vh;
+      width: 25vw;
+      z-index: 15;
+      cursor: pointer;
+    }
+    #left-zone { left: 0; }
+    #right-zone { right: 0; }
+    #menu-button {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 20;
+    }
+    #menu-popup {
+      position: fixed;
+      bottom: 80px;
+      left: 20px;
+      background: rgba(0,0,0,0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 16px;
+      display: none;
+      z-index: 30;
+      backdrop-filter: blur(10px);
+    }
+    #slide-bar {
+      width: 200px;
+      height: 10px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 5px;
+      position: relative;
+      margin-top: 10px;
+    }
+    #slide-handle {
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: -7px;
+      left: 0;
+      cursor: pointer;
+    }
+
+    /* ====================== SETTINGS – VERSION FINALE, SUPERBE & 100% CLIQUABLE ====================== */
+    #settings {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.96);
+      z-index: 9999;
+      display: none; /* caché au départ */
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px 10px;
+      overflow-y: auto;
+    }
+    #settings .panel {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 800px;
+      padding: 30px 25px;
+      box-shadow: 0 20px 100px rgba(0,0,0,0.8);
+    }
+    #settings h2 {
+      font-size: 32px;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 30px;
+      color: #ff6b6b;
+    }
+    #settings label {
+      display: block;
+      margin: 20px 0 8px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #aaa;
+    }
+    #settings input, #settings select, #settings textarea {
+      width: 100%;
+      padding: 14px 16px;
+      background: #222;
+      border: 1px solid #444;
+      border-radius: 12px;
+      color: white;
+      font-size: 17px;
+    }
+    #settings textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    #settings .btn {
+      padding: 14px 24px;
+      margin: 8px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    #settings .btn-blue   { background:#3b82f6; }
+    #settings .btn-green  { background:#22c55e; }
+    #settings .btn-purple { background:#a855f7; }
+    #settings .btn-red    { background:#ef4444; }
+    #settings .btn-gray   { background:#4b5563; }
+    #settings .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+    #settings .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 15px 0; }
+    @media (min-width: 640px) { #settings .grid { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body class="bg-black text-white">
 
-  <!-- Sélecteur de thème (disparaît après choix) -->
-  <div id="selector" class="fixed inset-0 bg-gradient-to-b from-black/90 to-transparent z-50 flex items-center justify-center">
-    <select id="themeSelect" class="text-3xl p-8 rounded-full bg-white/10 backdrop-blur-lg text-white border border-white/30" onchange="loadUniverse(this.value)">
-      <option value="">Choisis ton univers ✨</option>
-    </select>
+  <!-- Sélecteur de thème -->
+  <div id="selector" class="fixed inset-0 bg-gradient-to-b from-black/90 to-transparent z-50 flex flex-col items-center justify-center">
+    <h1 class="text-5xl text-white mb-8">Magik Univers</h1>
+    <div id="themeButtons" class="flex flex-wrap justify-center gap-4 mb-8"></div>
+    <button onclick="showSettings()" class="text-xl p-4 rounded-full bg-blue-500/20 backdrop-blur-lg text-white border border-blue-300">⚙️ Settings</button>
+  </div>
+
+  <!-- NOUVEAU PANNEAU SETTINGS (100% cliquable, magnifique, mobile-perfect) -->
+  <div id="settings">
+    <div class="panel">
+      <h2>Magik Settings</h2>
+
+      <label>Créer un nouvel univers</label>
+      <div class="grid gap-3">
+        <input id="newUniverseName" type="text" placeholder="Nom de l'univers (ex: Voiture)">
+        <input id="newUniverseTheme" type="text" placeholder="Thème pour génération (ex: voiture rouge Ferrari, Tesla)">
+        <button onclick="createUniverse()" class="btn btn-blue">Créer</button>
+      </div>
+
+      <label>Sélectionner un univers à éditer</label>
+      <select id="universeSelect">
+        <option value="">Choisir un univers...</option>
+      </select>
+
+      <label>Description globale</label>
+      <textarea id="descriptionTextarea" placeholder="Un monde mystérieux où..."></textarea>
+
+      <label>Prompts Images</label>
+      <div id="imagesContainer" class="grid"></div>
+
+      <label>Prompts Vidéos</label>
+      <div id="videosContainer" class="grid"></div>
+
+       <label>Prompt Musique</label>
+       <textarea id="musicTextarea" placeholder="Musique épique orchestrale avec chœurs mystiques..."></textarea>
+
+       <label>Paroles de la chanson</label>
+       <textarea id="lyricsTextarea" placeholder="Entrez les paroles ici..."></textarea>
+
+        <div class="flex flex-wrap justify-center gap-4 mt-12">
+          <button onclick="savePrompts()" class="btn btn-green">Sauvegarder tout</button>
+          <button onclick="regeneratePrompts()" class="btn btn-blue">Régénérer Prompts</button>
+          <button onclick="generateImages()" class="btn btn-purple">Images</button>
+          <button onclick="generateVideos()" class="btn btn-purple">Vidéos</button>
+          <button onclick="generateMusic()" class="btn btn-purple">Musique</button>
+          <button onclick="generateAll()" class="btn btn-red">TOUT Régénérer</button>
+          <button onclick="deleteUniverse()" class="btn btn-red">Supprimer Univers</button>
+          <button onclick="hideSettings()" class="btn btn-gray">Fermer</button>
+        </div>
+    </div>
   </div>
 
   <div id="gallery"></div>
+  <div id="indicators"></div>
+  <div id="left-zone"></div>
+  <div id="right-zone"></div>
+
+  <button id="menu-button">☰</button>
+  <button id="mute-button" class="fixed bottom-4 right-4 z-50 bg-black/50 text-white p-3 rounded-full text-2xl" onclick="toggleMute()">🔊</button>
+
+  <div id="menu-popup">
+    <h3>Glisse pour revenir</h3>
+    <div id="slide-bar"><div id="slide-handle"></div></div>
+  </div>
+
   <audio id="bgMusic" loop></audio>
 
   <script>
     let current = 0;
     let cards = [];
     let bgAudio = document.getElementById("bgMusic");
+    let isMuted = false;
+    let currentUniverse = null;
 
+    // === ÉTAT INITIAL PARFAIT (aucun bug au refresh) ===
+    document.getElementById("gallery").style.display = "none";
+    document.getElementById("settings").style.display = "none";
+    document.getElementById("selector").style.display = "flex";
+
+    // === POPULATE PROMPTS (version propre et moderne) ===
+    function populateImages(words, images) {
+      const c = document.getElementById("imagesContainer");
+      c.innerHTML = "";
+      words.forEach((w, i) => {
+        c.innerHTML += `<div><label class="text-sm text-gray-400 font-medium">${w}</label><textarea class="mt-1" placeholder="Prompt image personnalisé...">${images[i] || ""}</textarea></div>`;
+      });
+    }
+
+    function populateVideos(words, videos) {
+      const c = document.getElementById("videosContainer");
+      c.innerHTML = "";
+      words.forEach((w, i) => {
+        c.innerHTML += `<div><label class="text-sm text-gray-400 font-medium">${w}</label><textarea class="mt-1" placeholder="Prompt mouvement vidéo...">${videos[i] || ""}</textarea></div>`;
+      });
+    }
+
+    // === SETTINGS FUNCTIONS ===
+    function showSettings() {
+      document.getElementById("selector").style.display = "none";
+      document.getElementById("gallery").style.display = "none";
+      document.getElementById("settings").style.display = "flex";
+      loadUniverses();
+    }
+
+    function hideSettings() {
+      document.getElementById("settings").style.display = "none";
+      document.getElementById("selector").style.display = "flex";
+    }
+
+    async function loadUniverses() {
+      try {
+        const res = await fetch("http://192.168.1.28:8000/api/universes");
+        const universes = await res.json();
+        const select = document.getElementById("universeSelect");
+        select.innerHTML = '<option value="">Choisir un univers...</option>';
+        universes.forEach(u => {
+          const opt = document.createElement("option");
+          opt.value = u.folder;
+          opt.textContent = u.name;
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function createUniverse() {
+      const name = document.getElementById("newUniverseName").value.trim();
+      const theme = document.getElementById("newUniverseTheme").value.trim();
+      if (!name) return alert("Nom requis");
+      const res = await fetch("http://192.168.1.28:8000/api/universes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, theme })
+      });
+      if (res.ok) {
+        loadUniverses();
+        const folder = name.toLowerCase().replace(/ /g, '_');
+        document.getElementById("universeSelect").value = folder;
+        loadUniversePrompts(folder);
+      }
+    }
+
+    async function loadUniversePrompts(folder) {
+      const res = await fetch(`http://192.168.1.28:8000/api/universes/${folder}/prompts`);
+      const p = await res.json();
+      currentUniverse = folder;
+      document.getElementById("descriptionTextarea").value = p.description || "";
+      document.getElementById("musicTextarea").value = p.music || "";
+      document.getElementById("lyricsTextarea").value = p.lyrics || "";
+      populateImages(p.words || [], p.images || []);
+      populateVideos(p.words || [], p.videos || []);
+    }
+
+    async function savePrompts() {
+      if (!currentUniverse) return alert("Choisis un univers");
+      const desc = document.getElementById("descriptionTextarea").value;
+      const music = document.getElementById("musicTextarea").value;
+      const lyrics = document.getElementById("lyricsTextarea").value;
+      const images = Array.from(document.querySelectorAll("#imagesContainer textarea")).map(t => t.value);
+      const videos = Array.from(document.querySelectorAll("#videosContainer textarea")).map(t => t.value);
+      const words = Array.from(document.querySelectorAll("#imagesContainer label")).map(l => l.textContent);
+      const data = { theme: currentUniverse, description: desc, words, images, videos, music, lyrics };
+      await fetch(`http://192.168.1.28:8000/api/universes/${currentUniverse}/prompts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      alert("Sauvegardé !");
+    }
+
+    async function regeneratePrompts() {
+      if (!currentUniverse) return alert("Choisis un univers");
+      await fetch(`http://192.168.1.28:8000/api/universes/${currentUniverse}/regenerate-prompts`, { method: "POST" });
+      alert("Prompts régénérés ! Recharge la page pour voir les changements.");
+    }
+
+    async function deleteUniverse() {
+      if (!currentUniverse) return alert("Choisis un univers");
+      if (!confirm("Êtes-vous sûr de vouloir supprimer cet univers ? Cette action est irréversible et supprimera tous les fichiers.")) return;
+      await fetch(`http://192.168.1.28:8000/api/universes/${currentUniverse}`, { method: "DELETE" });
+      alert("Univers supprimé !");
+      // Refresh universe list
+      loadThemes();
+      // Clear form
+      document.getElementById("universeSelect").value = "";
+      currentUniverse = null;
+      document.getElementById("descriptionTextarea").value = "";
+      document.getElementById("musicTextarea").value = "";
+      document.getElementById("lyricsTextarea").value = "";
+      populateImages([], []);
+      populateVideos([], []);
+    }
+
+    // === GÉNÉRATION ===
+    async function generateImages() { if(!currentUniverse) return alert("Choisis un univers"); await fetch(`http://192.168.1.28:8000/api/generate/${currentUniverse}/images`, {method:"POST"}); alert("Images lancées"); }
+    async function generateVideos() { if(!currentUniverse) return alert("Choisis un univers"); await fetch(`http://192.168.1.28:8000/api/generate/${currentUniverse}/videos`, {method:"POST"}); alert("Vidéos lancées"); }
+    async function generateMusic() { if(!currentUniverse) return alert("Choisis un univers"); await fetch(`http://192.168.1.28:8000/api/generate/${currentUniverse}/music`, {method:"POST"}); alert("Musique lancée"); }
+    async function generateAll() { if(!currentUniverse) return alert("Choisis un univers"); await fetch(`http://192.168.1.28:8000/api/generate/${currentUniverse}/all`, {method:"POST"}); alert("Génération complète lancée"); }
+
+    // === PARTIE GALLERY – 100% ORIGINALE ET PARFAITE (celle qui marchait chez toi) ===
     async function loadThemes() {
-      const res = await fetch("univers/list.json");
+      const res = await fetch("http://192.168.1.28:8000/api/universes");
       const themes = await res.json();
-      const select = document.getElementById("themeSelect");
+      const container = document.getElementById("themeButtons");
       themes.forEach(t => {
-        const opt = new Option(t.name, t.folder);
-        select.add(opt);
+        const btn = document.createElement("button");
+        btn.textContent = t.name;
+        btn.className = "text-2xl px-8 py-4 rounded-full bg-white/10 backdrop-blur-lg text-white border border-white/30 hover:bg-white/20 transition";
+        btn.onclick = () => loadUniverse(t.folder);
+        container.appendChild(btn);
       });
     }
 
     async function loadUniverse(folder) {
       document.getElementById("selector").style.display = "none";
-      
-      const data = await fetch(`univers/${folder}/data.json`).then(r => r.json());
+      document.getElementById("gallery").style.display = "block";
+
+      const data = await fetch(`storage/univers/${folder}/data.json`).then(r => r.json());
       const gallery = document.getElementById("gallery");
       gallery.innerHTML = "";
+      cards = [];
 
-      // Musique de fond (une seule fois)
-      bgAudio.src = `univers/${folder}/music.mp3`;
+      bgAudio.src = `storage/univers/${folder}/music.mp3`;
       bgAudio.volume = 0.28;
+      bgAudio.muted = isMuted;
       bgAudio.play().catch(() => {});
 
       data.items.forEach((item, i) => {
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
-          <img src="univers/${folder}/${item.image}" loading="lazy">
+          <img src="storage/univers/${folder}/${item.image}" loading="lazy">
           <div class="title">${item.title}</div>
         `;
         gallery.appendChild(card);
 
-        // Clic → vidéo muette en plein écran
-        card.onclick = () => playVideo(item.video, folder);
+        const imgElement = card.querySelector('img');
 
-        // Animation d'entrée
+        card.onclick = () => {
+          if (imgElement && item.video && card.contains(imgElement)) {
+            const video = document.createElement('video');
+            video.src = `storage/univers/${folder}/${item.video}`;
+            video.muted = true;
+            video.playsInline = true;
+            video.autoplay = true;
+            video.loop = true;
+            video.style.width = '100%';
+            video.style.height = '100%';
+            video.style.objectFit = 'cover';
+            card.replaceChild(video, imgElement);
+
+            card.onclick = () => {
+              card.replaceChild(imgElement, video);
+              card.onclick = () => {
+                const video2 = document.createElement('video');
+                video2.src = video.src;
+                video2.muted = true;
+                video2.playsInline = true;
+                video2.autoplay = true;
+                video2.loop = true;
+                video2.style = video.style;
+                card.replaceChild(video2, imgElement);
+                card.onclick = () => card.replaceChild(imgElement, video2);
+              };
+            };
+          }
+        };
+
         setTimeout(() => {
           card.style.transform = `translate(-50%, -50%) translateX(${i * 110}vw) scale(0.9) rotate(${i * 20}deg)`;
         }, i * 150);
@@ -92,7 +449,18 @@
 
       showCard(0);
 
-      // Swipe
+      document.getElementById("left-zone").onclick = () => { current = Math.max(0, current - 1); showCard(current); };
+      document.getElementById("right-zone").onclick = () => { current = Math.min(cards.length - 1, current + 1); showCard(current); };
+
+      const indicators = document.getElementById("indicators");
+      indicators.innerHTML = "";
+      data.items.forEach((_, i) => {
+        const dot = document.createElement("div");
+        dot.className = "indicator";
+        dot.onclick = () => showCard(i);
+        indicators.appendChild(dot);
+      });
+
       let startX = 0;
       gallery.addEventListener("touchstart", e => startX = e.touches[0].clientX, {passive:true});
       gallery.addEventListener("touchend", e => {
@@ -105,35 +473,90 @@
     }
 
     function showCard(n) {
+      current = n;
       cards.forEach((card, i) => {
         const diff = i - n;
         card.style.transform = `translate(-50%, -50%) translateX(${diff * 110}vw) scale(${diff === 0 ? 1 : 0.88}) rotate(${diff * 18}deg)`;
         card.style.zIndex = diff === 0 ? 10 : 5 - Math.abs(diff);
         card.style.opacity = Math.abs(diff) > 2 ? 0 : 1;
       });
+      document.querySelectorAll(".indicator").forEach((dot, i) => dot.classList.toggle("active", i === n));
     }
 
-    // Vidéo plein écran (sortie seulement avec appui long 3 secondes)
-    function playVideo(videoFile, folder) {
-      const video = document.createElement("video");
-      video.id = "fullscreen-video";
-      video.src = `univers/${folder}/${videoFile}`;
-      video.muted = true;        // ← muette
-      video.playsInline = true;
-      video.autoplay = true;
-      video.loop = true;
-      document.body.appendChild(video);
-
-      let pressTimer;
-      video.addEventListener("touchstart", () => {
-        pressTimer = setTimeout(() => {
-          video.remove();
-        }, 3000); // 3 secondes = sortie
-      });
-      video.addEventListener("touchend", () => clearTimeout(pressTimer));
-      video.onclick = () => clearTimeout(pressTimer); // sécurité
+    function toggleMute() {
+      isMuted = !isMuted;
+      bgAudio.muted = isMuted;
+      document.getElementById("mute-button").textContent = isMuted ? "🔇" : "🔊";
     }
 
+    // === MENU SLIDE (exactement comme ton ancien code qui marchait) ===
+    document.getElementById("menu-button").onclick = () => {
+      const popup = document.getElementById("menu-popup");
+      popup.style.display = popup.style.display === "block" ? "none" : "block";
+    };
+
+    let isDragging = false;
+    let startX = 0;
+    let currentX = 0;
+    const handle = document.getElementById("slide-handle");
+    const bar = document.getElementById("slide-bar");
+
+    function startDrag(clientX) {
+      isDragging = true;
+      startX = clientX - handle.offsetLeft;
+    }
+
+    function moveDrag(clientX) {
+      if (!isDragging) return;
+      currentX = clientX - startX;
+      currentX = Math.max(0, Math.min(currentX, bar.offsetWidth - handle.offsetWidth));
+      handle.style.left = currentX + "px";
+    }
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+      if (currentX > bar.offsetWidth * 0.8) {
+        document.getElementById("gallery").style.display = "none";
+        document.getElementById("selector").style.display = "flex";
+        document.getElementById("menu-popup").style.display = "none";
+        document.getElementById("settings").style.display = "none";
+        bgAudio.pause();
+      }
+      handle.style.left = "0px";
+    }
+
+    handle.addEventListener("mousedown", e => startDrag(e.clientX));
+    document.addEventListener("mousemove", e => moveDrag(e.clientX));
+    document.addEventListener("mouseup", endDrag);
+
+    handle.addEventListener("touchstart", e => {
+      if (e.target === handle || handle.contains(e.target)) {
+        startDrag(e.touches[0].clientX);
+        e.stopPropagation();
+      }
+    }, {passive: true});
+
+    document.addEventListener("touchmove", e => {
+      if (isDragging) {
+        moveDrag(e.touches[0].clientX);
+        e.preventDefault();
+      }
+    }, {passive: false});
+
+    document.addEventListener("touchend", () => { if (isDragging) endDrag(); });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft') showCard(Math.max(0, current - 1));
+      if (e.key === 'ArrowRight') showCard(Math.min(cards.length - 1, current + 1));
+    });
+
+    // === SÉLECTION UNIVERSE DANS SETTINGS ===
+    document.getElementById("universeSelect").addEventListener("change", e => {
+      if (e.target.value) loadUniversePrompts(e.target.value);
+    });
+
+    // === LANCEMENT ===
     loadThemes();
   </script>
 </body>

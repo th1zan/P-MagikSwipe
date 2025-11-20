@@ -2,14 +2,24 @@ services:
   viewer:
     build: ./viewer
     ports:
-      - "8080:80"
+      - "8081:80"
     volumes:
-      - ./projet/univers:/usr/share/nginx/html/univers
-  generator:
-    image: magik-swipe
+      - ./viewer:/usr/share/nginx/html
+      - ./storage:/usr/share/nginx/html/storage
+
+  api:
+    build: ./api          # nouveau Dockerfile FastAPI
+    ports:
+      - "8000:8000"
     volumes:
-      - ./projet/univers:/app/univers
+      - ./storage:/app/storage
+      - ./api:/app
+      - ./projet:/app/projet
     environment:
       - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
-      - TEST_MODE=${TEST_MODE:-false}
-    command: sh -c "if [ \"$TEST_MODE\" = \"true\" ]; then python main.py --theme jungle --words-only; else python main.py --theme jungle; fi"
+
+  generator:              # tu peux garder ou fusionner avec api
+    build: ./projet
+    volumes:
+      - ./projet:/app
+      - ./storage:/app/storage

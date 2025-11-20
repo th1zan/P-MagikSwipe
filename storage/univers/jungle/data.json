@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "image": "00_monkey.png",
+      "title": "monkey",
+      "video": "00_monkey_silent.mp4"
+    },
+    {
+      "image": "01_tree.png",
+      "title": "tree",
+      "video": "01_tree_silent.mp4"
+    },
+    {
+      "image": "02_bird.png",
+      "title": "bird",
+      "video": "02_bird_silent.mp4"
+    },
+    {
+      "image": "03_flower.png",
+      "title": "flower",
+      "video": "03_flower_silent.mp4"
+    },
+    {
+      "image": "04_snake.png",
+      "title": "snake",
+      "video": "04_snake_silent.mp4"
+    },
+    {
+      "image": "05_lion.png",
+      "title": "lion",
+      "video": "05_lion_silent.mp4"
+    },
+    {
+      "image": "06_zebra.png",
+      "title": "zebra",
+      "video": "06_zebra_silent.mp4"
+    },
+    {
+      "image": "07_giraffe.png",
+      "title": "giraffe",
+      "video": "07_giraffe_silent.mp4"
+    },
+    {
+      "image": "08_elephant.png",
+      "title": "elephant",
+      "video": "08_elephant_silent.mp4"
+    },
+    {
+      "image": "09_butterfly.png",
+      "title": "butterfly",
+      "video": "09_butterfly_silent.mp4"
+    }
+  ]
+}

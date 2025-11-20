@@ -19,9 +19,10 @@ Projet pour générer des univers magiques pour enfants : mots → images → vi
 1. Construisez : `./run.sh build`
 2. Lancez complet : `./run.sh run jungle`
 3. Étapes séparées :
-   - Mots : `./run.sh run jungle --words-only`
-   - Images : `./run.sh run jungle --images-only`
-   - Vidéos : `./run.sh run jungle --videos-only`
+    - Mots : `./run.sh run jungle --words-only`
+    - Images : `./run.sh run jungle --images-only`
+    - Vidéos : `./run.sh run jungle --videos-only`
+    - Musique : `./run.sh run jungle --music-only`
 4. Ouvrez `viewer.html` dans un navigateur pour visualiser.
 
 ### Avec Docker Compose
@@ -32,15 +33,16 @@ Projet pour générer des univers magiques pour enfants : mots → images → vi
 1. Installez deps : `pip install -r requirements.txt`
 2. Lancez complet : `python main.py --theme jungle`
 3. Étapes séparées :
-   - Mots : `python main.py --theme jungle --words-only`
-   - Images : `python main.py --theme jungle --images-only`
-   - Vidéos : `python main.py --theme jungle --videos-only`
+    - Mots : `python main.py --theme jungle --words-only`
+    - Images : `python main.py --theme jungle --images-only`
+    - Vidéos : `python main.py --theme jungle --videos-only`
+    - Musique : `python main.py --theme jungle --music-only`
 
 ## Fonctionnement
-- Génère 10 mots-clés via Replicate (Llama-3.3-70B).
+- Génère 10 mots-clés via Replicate (Llama-2-70B-Chat).
 - Crée images via Replicate (Recraft-V3).
 - Anime les images en vidéos courtes via Replicate (WAN 2.2 I2V).
-- Ajoute audio TTS français avec gTTS/MoviePy.
+- Génère musique thématique via Replicate (Minimax Music-1.5).
 - Met à jour `univers/list.json` et crée `univers/{theme}/data.json`.
 
 ## Dépendances

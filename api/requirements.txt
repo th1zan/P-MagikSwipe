@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+replicate
+pillow
+requests
+pyyaml
