@@ -12,7 +12,7 @@ Projet pour générer des univers magiques pour enfants : mots → images → vi
 
 ## Installation
 1. Clonez ou copiez le projet.
-2. Créez `.env` basé sur `.env.example` avec votre `REPLICATE_API_TOKEN`.
+2. Créez `.env` basé sur `.env.example` avec votre `REPLICATE_API_TOKEN`, `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Utilisation
 ### Avec Docker (recommandé)
@@ -37,6 +37,27 @@ Projet pour générer des univers magiques pour enfants : mots → images → vi
     - Images : `python main.py --theme jungle --images-only`
     - Vidéos : `python main.py --theme jungle --videos-only`
     - Musique : `python main.py --theme jungle --music-only`
+
+## Upload vers Supabase
+Une fois l'univers généré, vous pouvez l'uploader vers Supabase Storage et mettre à jour la base de données.
+
+### Configuration Supabase
+1. Créez un projet Supabase.
+2. Créez un bucket public `univers`.
+3. Créez une table `univers` avec colonnes : `id` (int8, primary), `name` (text), `folder` (text, unique), `thumbnail_url` (text), `is_public` (boolean), `created_at` (timestamptz).
+4. Copiez l'URL du projet et la clé service_role dans `.env`.
+
+### Utilisation
+- **Upload seulement** (univers déjà généré) : `python upload_universe.py "Nom de l'Univers"`
+- **Upload tous les univers** : `python upload_universe.py` (sans argument)
+- **Forcer l'upload** : `python upload_universe.py --force` (re-upload même si déjà présent)
+- **Génération + Upload** (tout en un) : `python publish_universe.py "Nom de l'Univers"`
+
+Exemples :
+- `python upload_universe.py "Jungle Magique"`
+- `python publish_universe.py "Océan Enchanté"`
+
+Les fichiers sont uploadés dans le bucket Supabase et l'entrée est ajoutée dans la table `univers`.
 
 ## Fonctionnement
 - Génère 10 mots-clés via Replicate (Llama-2-70B-Chat).

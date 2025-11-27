@@ -1,7 +1,8 @@
 fastapi
 uvicorn
-pydantic
+python-multipart
 python-dotenv
+supabase
 replicate
 pillow
 requests
