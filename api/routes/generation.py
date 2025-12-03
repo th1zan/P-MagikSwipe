@@ -111,6 +111,21 @@ def generate_single_video(universe: str, index: int):
     
     return {"message": f"Video for {word} generated"}
 
+@router.post("/generate/{universe}/thumbnail")
+def regenerate_thumbnail(universe: str):
+    theme = universe.lower().replace(' ', '_')
+    data_path = os.path.join(STORAGE_PATH, "univers", theme, "data.json")
+    if not os.path.exists(data_path):
+        raise HTTPException(status_code=404, detail="Data not found")
+    with open(data_path, 'r') as f:
+        universe_data = json.load(f)
+    if 'items' not in universe_data or not universe_data['items']:
+        raise HTTPException(status_code=400, detail="No items found")
+    universe_data["thumbnail"] = universe_data['items'][0]['image']
+    with open(data_path, 'w') as f:
+        json.dump(universe_data, f, indent=2)
+    return {"message": f"Thumbnail set for {universe}"}
+
 @router.get("/status/{task_id}")
 def get_status(task_id: str):
     # Placeholder for task status

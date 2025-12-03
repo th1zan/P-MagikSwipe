@@ -23,7 +23,9 @@ Projet pour générer des univers magiques pour enfants : mots → images → vi
     - Images : `./run.sh run jungle --images-only`
     - Vidéos : `./run.sh run jungle --videos-only`
     - Musique : `./run.sh run jungle --music-only`
-4. Ouvrez `viewer.html` dans un navigateur pour visualiser.
+4. Populer la DB : `./run.sh run --populate-assets` (popule univers_assets pour tous les univers existants)
+5. Sync DB : `./run.sh run --sync-univers-db` (synchronise la table univers avec musique/couleur sans régénération, insère si manquant)
+6. Ouvrez `viewer.html` dans un navigateur pour visualiser.
 
 ### Avec Docker Compose
 1. `docker compose up -d`
@@ -37,6 +39,8 @@ Projet pour générer des univers magiques pour enfants : mots → images → vi
     - Images : `python main.py --theme jungle --images-only`
     - Vidéos : `python main.py --theme jungle --videos-only`
     - Musique : `python main.py --theme jungle --music-only`
+4. Populer la DB : `python main.py --populate-assets` (popule univers_assets pour tous les univers existants)
+5. Sync DB : `python main.py --sync-univers-db` (synchronise la table univers avec musique/couleur sans régénération, insère si manquant)
 
 ## Upload vers Supabase
 Une fois l'univers généré, vous pouvez l'uploader vers Supabase Storage et mettre à jour la base de données.
@@ -44,8 +48,47 @@ Une fois l'univers généré, vous pouvez l'uploader vers Supabase Storage et me
 ### Configuration Supabase
 1. Créez un projet Supabase.
 2. Créez un bucket public `univers`.
-3. Créez une table `univers` avec colonnes : `id` (int8, primary), `name` (text), `folder` (text, unique), `thumbnail_url` (text), `is_public` (boolean), `created_at` (timestamptz).
+3. Créez les tables via les requêtes SQL ci-dessous.
 4. Copiez l'URL du projet et la clé service_role dans `.env`.
+
+### Requêtes SQL pour créer les tables dans Supabase
+Utilisez ces requêtes dans l'interface SQL Editor de Supabase pour créer les tables nécessaires. (Note: Les tables sont déjà créées dans le projet actuel.)
+
+Pour ajouter les colonnes manquantes si elles n'existent pas :
+```sql
+alter table univers add column if not exists background_color text;
+alter table univers add column if not exists background_music text;
+```
+
+#### Table `univers`
+```sql
+create table univers (
+  id int8 primary key,
+  name text,
+  folder text unique,
+  thumbnail_url text,
+  background_color text,
+  background_music text,
+  is_public boolean,
+  created_at timestamptz
+);
+```
+
+#### Table `univers_assets`
+```sql
+create table univers_assets (
+  id uuid primary key default uuid_generate_v4(),
+  univers_folder text not null,
+  sort_order int not null,
+  image_name text not null,
+  display_name text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index idx_univers_assets_folder on univers_assets(univers_folder);
+create index idx_univers_assets_order on univers_assets(univers_folder, sort_order);
+```
 
 ### Utilisation
 - **Upload seulement** (univers déjà généré) : `python upload_universe.py "Nom de l'Univers"`

@@ -45,11 +45,21 @@ def add_universe_to_db(name: str, folder: str, thumbnail_file: str = "00_"):
 
     public_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{folder}/{thumbnail}"
 
+    # Load background_color from data.json
+    data_path = f"storage/univers/{folder}/data.json"
+    color = "#ffffff"
+    if os.path.exists(data_path):
+        with open(data_path, 'r') as f:
+            universe_data = json.load(f)
+        color = universe_data.get('background_color', '#ffffff')
+
     data = {
         "name": name,
         "folder": folder,
         "is_public": True,
         "thumbnail_url": public_url,
+        "background_color": color,
+        "background_music": "music.mp3",
         "created_at": "now()"
     }
     
@@ -80,6 +90,26 @@ def publish(theme_name: str):
 
     print("Ajout dans la base de données...")
     add_universe_to_db(theme_name, folder)
+
+    # Insert assets into univers_assets
+    data_path = f"storage/univers/{folder}/data.json"
+    if os.path.exists(data_path):
+        with open(data_path, 'r') as f:
+            universe_data = json.load(f)
+        items = universe_data.get("items", [])
+        try:
+            inserts = []
+            for i, item in enumerate(items):
+                inserts.append({
+                    "univers_folder": folder,
+                    "sort_order": i,
+                    "image_name": item["image"],
+                    "display_name": item["title"]
+                })
+            supabase.table("univers_assets").insert(inserts).execute()
+            print(f"Inserted {len(inserts)} assets for {folder}")
+        except Exception as e:
+            print(f"DB assets insert error: {e}")
 
     print(f"\nUnivers '{theme_name}' publié avec succès !")
     print(f"Visible dans l'app : {SUPABASE_URL}/storage/v1/object/public/univers/{folder}/")

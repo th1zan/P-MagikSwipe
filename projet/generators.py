@@ -5,6 +5,7 @@ import yaml
 import json
 from PIL import Image
 import io
+from collections import Counter
 
 # Chargement des prompts une seule fois
 with open("storage/prompts.yaml", encoding="utf-8") as f:
@@ -131,3 +132,17 @@ def generate_theme_music(theme_key: str, theme_name_fr: str, music_prompt=None, 
         f.write(music_data)
     print(f"Musique générée : {music_path}")
     return music_path
+
+def get_dominant_color(image_path):
+    try:
+        img = Image.open(image_path)
+        img = img.resize((100, 100))  # resize for performance
+        pixels = list(img.getdata())
+        most_common = Counter(pixels).most_common(1)[0][0]
+        # assuming RGB
+        if isinstance(most_common, tuple) and len(most_common) == 3:
+            return f"#{most_common[0]:02x}{most_common[1]:02x}{most_common[2]:02x}"
+        else:
+            return "#ffffff"  # fallback
+    except Exception:
+        return "#ffffff"
