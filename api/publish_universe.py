@@ -59,12 +59,15 @@ def add_universe_to_db(name: str, folder: str, thumbnail_file: str = "00_"):
         "background_music": "music.mp3",
         "created_at": "now()"
     }
-    
+
     response = supabase.table(TABLE_NAME).insert(data).execute()
     if response.data:
+        univers_id = response.data[0]["id"]
         print(f"Univers '{name}' ajouté dans la base !")
+        return univers_id
     else:
         print("Erreur DB :", response)
+        return None
 
 def publish(theme_name: str):
     """Étape finale : génère + upload + ajoute en DB"""
@@ -86,7 +89,9 @@ def publish(theme_name: str):
     upload_folder_to_supabase(local_path, folder)
 
     print("Ajout dans la base de données...")
-    add_universe_to_db(theme_name, folder)
+    univers_id = add_universe_to_db(theme_name, folder)
+    if not univers_id:
+        return
 
     # Insert assets into univers_assets
     data_path = f"storage/univers/{folder}/data.json"
@@ -98,15 +103,30 @@ def publish(theme_name: str):
             inserts = []
             for i, item in enumerate(items):
                 inserts.append({
-                    "univers_folder": folder,
+                    "univers_id": univers_id,
                     "sort_order": i,
                     "image_name": item["image"],
                     "display_name": item["title"]
                 })
-            supabase.table("univers_assets").insert(inserts).execute()
+            asset_responses = supabase.table("univers_assets").insert(inserts).execute()
             print(f"Inserted {len(inserts)} assets for {folder}")
+
+            # Insert translations
+            for i, item in enumerate(items):
+                asset_id = asset_responses.data[i]["id"]
+                translations = []
+                title_translations = item.get("title_translations", {})
+                for lang in ["fr", "en", "es", "it", "de"]:
+                    display_name = title_translations.get(lang, item["title"])
+                    translations.append({
+                        "asset_id": asset_id,
+                        "language": lang,
+                        "display_name": display_name
+                    })
+                supabase.table("univers_assets_translations").insert(translations).execute()
+            print(f"Inserted translations for {len(items)} assets")
         except Exception as e:
-            print(f"DB assets insert error: {e}")
+            print(f"DB assets/translations insert error: {e}")
 
     print(f"\nUnivers '{theme_name}' publié avec succès !")
     print(f"Visible dans l'app : {SUPABASE_URL}/storage/v1/object/public/univers/{folder}/")

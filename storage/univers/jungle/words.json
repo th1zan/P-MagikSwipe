@@ -1,15 +1,77 @@
 {
   "theme": "jungle",
   "words": [
-    "monkey",
-    "tree",
-    "bird",
-    "flower",
-    "snake",
     "lion",
-    "zebra",
-    "giraffe",
-    "elephant",
-    "butterfly"
-  ]
+    "singe",
+    "\u00e9l\u00e9phant",
+    "girafe",
+    "z\u00e8bre",
+    "kangourou",
+    "manchot",
+    "koala",
+    "tigre",
+    "et"
+  ],
+  "words_translations": {
+    "en": [
+      "lion",
+      "monkey",
+      "elephant",
+      "giraffe",
+      "zebra",
+      "kangaroo",
+      "penguin",
+      "koala",
+      "tiger",
+      "and"
+    ],
+    "fr": [
+      "lion",
+      "singe",
+      "\u00e9l\u00e9phant",
+      "girafe",
+      "z\u00e8bre",
+      "kangourou",
+      "manchot",
+      "koala",
+      "tigre",
+      "et"
+    ],
+    "es": [
+      "le\u00f3n",
+      "mono",
+      "elefante",
+      "jirafa",
+      "cebra",
+      "canguro",
+      "ping\u00fcino",
+      "coala",
+      "tigre",
+      "y"
+    ],
+    "it": [
+      "leone",
+      "scimmia",
+      "elefante",
+      "giraffa",
+      "zebra",
+      "canguro",
+      "pinguino",
+      "koala",
+      "tigre",
+      "e"
+    ],
+    "de": [
+      "l\u00f6we",
+      "affe",
+      "elefant",
+      "giraffe",
+      "zebra",
+      "k\u00e4nguru",
+      "pinguin",
+      "koala",
+      "tiger",
+      "und"
+    ]
+  }
 }

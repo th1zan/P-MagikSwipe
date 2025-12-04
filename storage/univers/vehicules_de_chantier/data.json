@@ -1,0 +1,125 @@
+{
+  "items": [
+    {
+      "image": "00_truck.png",
+      "title": "truck",
+      "video": "00_truck_silent.mp4",
+      "title_translations": {
+        "fr": "1. creuseur",
+        "en": "1. digger",
+        "es": "1. excavador",
+        "it": "1. scavatore",
+        "de": "1. bagger"
+      }
+    },
+    {
+      "image": "01_crane.png",
+      "title": "crane",
+      "video": "01_crane_silent.mp4",
+      "title_translations": {
+        "fr": "2. camion",
+        "en": "2. truck",
+        "es": "2. cami\u00f3n",
+        "it": "2. camion",
+        "de": "2. lkw"
+      }
+    },
+    {
+      "image": "02_digger.png",
+      "title": "digger",
+      "video": "02_digger_silent.mp4",
+      "title_translations": {
+        "fr": "3. grue",
+        "en": "3. crane",
+        "es": "3. gr\u00faa",
+        "it": "3. gru",
+        "de": "3. kran"
+      }
+    },
+    {
+      "image": "03_mixer.png",
+      "title": "mixer",
+      "video": "03_mixer_silent.mp4",
+      "title_translations": {
+        "fr": "4. m\u00e9langeur",
+        "en": "4. mixer",
+        "es": "4. mezclador",
+        "it": "4. miscelatore",
+        "de": "4. mixer"
+      }
+    },
+    {
+      "image": "04_roller.png",
+      "title": "roller",
+      "video": "04_roller_silent.mp4",
+      "title_translations": {
+        "fr": "5. rouleau",
+        "en": "5. roller",
+        "es": "5. rodillo",
+        "it": "5. rullo",
+        "de": "5. walze"
+      }
+    },
+    {
+      "image": "05_bulldozer.png",
+      "title": "bulldozer",
+      "video": "05_bulldozer_silent.mp4",
+      "title_translations": {
+        "fr": "6. bulldozer",
+        "en": "6. dozer",
+        "es": "6. topadora",
+        "it": "6. apripista",
+        "de": "6. planierraupe"
+      }
+    },
+    {
+      "image": "06_backhoe.png",
+      "title": "backhoe",
+      "video": "06_backhoe_silent.mp4",
+      "title_translations": {
+        "fr": "7. r\u00e9trocaveuse",
+        "en": "7. backhoe",
+        "es": "7. retroexcavadora",
+        "it": "7. terna",
+        "de": "7. baggerlader"
+      }
+    },
+    {
+      "image": "07_excavator.png",
+      "title": "excavator",
+      "video": "07_excavator_silent.mp4",
+      "title_translations": {
+        "fr": "8. chargeur",
+        "en": "8. loader",
+        "es": "8. cargador",
+        "it": "8. caricatore",
+        "de": "8. lader"
+      }
+    },
+    {
+      "image": "08_forklift.png",
+      "title": "forklift",
+      "video": "08_forklift_silent.mp4",
+      "title_translations": {
+        "fr": "9. chariot \u00e9l\u00e9vateur",
+        "en": "9. forklift",
+        "es": "9. carretilla elevadora",
+        "it": "9. carrello elevatore",
+        "de": "9. gabelstapler"
+      }
+    },
+    {
+      "image": "09_cement_mixer.png",
+      "title": "cement_mixer",
+      "video": "09_cement_mixer_silent.mp4",
+      "title_translations": {
+        "fr": "10. b\u00e9tonni\u00e8re",
+        "en": "10. cement mixer",
+        "es": "10. mezclador de cemento",
+        "it": "10. betoniera",
+        "de": "10. betonmischer"
+      }
+    }
+  ],
+  "thumbnail": "00_truck.png"
+}

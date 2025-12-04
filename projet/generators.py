@@ -3,9 +3,13 @@ import requests
 import os
 import yaml
 import json
+import logging
 from PIL import Image
 import io
 from collections import Counter
+import subprocess
+import re
+from deep_translator import GoogleTranslator
 
 # Chargement des prompts une seule fois
 with open("storage/prompts.yaml", encoding="utf-8") as f:
@@ -17,20 +21,30 @@ MUSIC_MODEL = PROMPTS["music"]["model"]
 def get_theme_description(theme_key: str) -> str:
     return PROMPTS["themes"].get(theme_key, f"univers magique {theme_key}")
 
-def generate_words(theme_name: str):
-    prompt = f'Génère exactement 10 mots simples et joyeux pour enfants de 3-7 ans sur le thème "{theme_name}". Un mot par ligne, rien d’autre.'
+def generate_words(theme_name: str, debug=False):
+    # Génère seulement en anglais
+    prompt = f'Generate exactly 10 simple and joyful words for children aged 3-7 on the theme "{theme_name}" in English. Provide them as a comma-separated list without numbering or bullets.'
+    logging.debug(f"Sending prompt to IA: {prompt}")
     output = replicate.run("meta/llama-2-70b-chat", input={"prompt": prompt, "temperature": 0.7, "max_tokens": 200})
     text = "".join(output)
-    words = []
-    for line in text.split("\n"):
-        line = line.strip()
-        if line and len(line) < 25:
-            # Remove leading numbers like "1. "
-            if ". " in line:
-                line = line.split(". ", 1)[1]
-            words.append(line.lower())
-    words = words[:10]
-    return words[:10]
+    logging.debug(f"IA response: {text}")
+    # Nettoyer : extraire les mots après l'intro (après ":\n\n" ou similaire)
+    if ":\n\n" in text:
+        text = text.split(":\n\n", 1)[1]
+    # Utiliser regex pour extraire les mots simples
+    words = re.findall(r'\b[a-zA-Z]+\b', text)
+    en_words = [word.lower() for word in words if len(word) < 20][:10]
+    logging.debug(f"Extracted English words: {en_words}")
+
+    # Traduis vers autres langues
+    words_dict = {"en": en_words}
+    for lang in ["fr", "es", "it", "de"]:
+        logging.debug(f"Translating to {lang}...")
+        translated = [GoogleTranslator(source='en', target=lang).translate(word).lower() for word in en_words]
+        logging.debug(f"Translated to {lang}: {translated}")
+        words_dict[lang] = translated
+
+    return words_dict
 
 def generate_image(word: str, theme_key: str, index: int, prompt=None):
     if prompt is None:
@@ -69,12 +83,22 @@ def generate_video(image_path: str, word: str, theme_key: str, index: int, motio
     )
 
     video_url = output
-    final_path = f"storage/univers/{theme_key}/{index:02d}_{word.replace(' ', '_')}_silent.mp4"
-    
+    temp_path = f"storage/univers/{theme_key}/{index:02d}_{word.replace(' ', '_')}_temp.mp4"
+    final_path = f"storage/univers/{theme_key}/{index:02d}_{word.replace(' ', '_')}_silent.webm"
+
     # Téléchargement direct → PAS de son ajouté
     video_data = requests.get(video_url).content
-    with open(final_path, "wb") as f:
+    with open(temp_path, "wb") as f:
         f.write(video_data)
+
+    # Conversion en WebM
+    subprocess.run([
+        "ffmpeg", "-i", temp_path, "-c:v", "libvpx-vp9", "-an", final_path
+    ], check=True)
+
+    # Conserver aussi le MP4
+    mp4_path = final_path.replace('_silent.webm', '_silent.mp4')
+    os.rename(temp_path, mp4_path)
 
     print(f"    Vidéo muette générée : {final_path}")
     return final_path

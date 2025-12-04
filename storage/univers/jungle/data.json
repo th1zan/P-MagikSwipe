@@ -3,52 +3,122 @@
     {
       "image": "00_monkey.png",
       "title": "monkey",
-      "video": "00_monkey_silent.mp4"
+      "video": "00_monkey_silent.mp4",
+      "title_translations": {
+        "fr": "bien s\u00fbr",
+        "en": "sure",
+        "es": "seguro",
+        "it": "sicuro",
+        "de": "sicher"
+      }
     },
     {
       "image": "01_tree.png",
       "title": "tree",
-      "video": "01_tree_silent.mp4"
+      "video": "01_tree_silent.mp4",
+      "title_translations": {
+        "fr": "voici dix mots simples et joyeux pour les enfants de 3 \u00e0 7 ans sur le th\u00e8me \u00ab jungle \u00bb :\n\nlion",
+        "en": "here are ten simple and joyful words for children aged 3-7 on the theme \"jungle\":\n\nlion",
+        "es": "he aqu\u00ed diez palabras sencillas y alegres para ni\u00f1os de 3 a 7 a\u00f1os sobre el tema \"jungla\":\n\nle\u00f3n",
+        "it": "ecco dieci parole semplici e gioiose per bambini dai 3 ai 7 anni sul tema \"giungla\":\n\nleone",
+        "de": "hier sind zehn einfache und fr\u00f6hliche worte f\u00fcr kinder im alter von 3 bis 7 jahren zum thema \u201edschungel\u201c:\n\nl\u00f6we"
+      }
     },
     {
       "image": "02_bird.png",
       "title": "bird",
-      "video": "02_bird_silent.mp4"
+      "video": "02_bird_silent.mp4",
+      "title_translations": {
+        "fr": "singe",
+        "en": "monkey",
+        "es": "mono",
+        "it": "scimmia",
+        "de": "affe"
+      }
     },
     {
       "image": "03_flower.png",
       "title": "flower",
-      "video": "03_flower_silent.mp4"
+      "video": "03_flower_silent.mp4",
+      "title_translations": {
+        "fr": "arbre",
+        "en": "tree",
+        "es": "\u00e1rbol",
+        "it": "albero",
+        "de": "baum"
+      }
     },
     {
       "image": "04_snake.png",
       "title": "snake",
-      "video": "04_snake_silent.mp4"
+      "video": "04_snake_silent.mp4",
+      "title_translations": {
+        "fr": "oiseau",
+        "en": "bird",
+        "es": "p\u00e1jaro",
+        "it": "uccello",
+        "de": "vogel"
+      }
     },
     {
       "image": "05_lion.png",
       "title": "lion",
-      "video": "05_lion_silent.mp4"
+      "video": "05_lion_silent.mp4",
+      "title_translations": {
+        "fr": "serpent",
+        "en": "snake",
+        "es": "serpiente",
+        "it": "serpente",
+        "de": "schlange"
+      }
     },
     {
       "image": "06_zebra.png",
       "title": "zebra",
-      "video": "06_zebra_silent.mp4"
+      "video": "06_zebra_silent.mp4",
+      "title_translations": {
+        "fr": "tigre",
+        "en": "tiger",
+        "es": "tigre",
+        "it": "tigre",
+        "de": "tiger"
+      }
     },
     {
       "image": "07_giraffe.png",
       "title": "giraffe",
-      "video": "07_giraffe_silent.mp4"
+      "video": "07_giraffe_silent.mp4",
+      "title_translations": {
+        "fr": "fleur",
+        "en": "flower",
+        "es": "flor",
+        "it": "fiore",
+        "de": "blume"
+      }
     },
     {
       "image": "08_elephant.png",
       "title": "elephant",
-      "video": "08_elephant_silent.mp4"
+      "video": "08_elephant_silent.mp4",
+      "title_translations": {
+        "fr": "feuille",
+        "en": "leaf",
+        "es": "hoja",
+        "it": "foglia",
+        "de": "blatt"
+      }
     },
     {
       "image": "09_butterfly.png",
       "title": "butterfly",
-      "video": "09_butterfly_silent.mp4"
+      "video": "09_butterfly_silent.mp4",
+      "title_translations": {
+        "fr": "rivi\u00e8re",
+        "en": "river",
+        "es": "r\u00edo",
+        "it": "fiume",
+        "de": "fluss"
+      }
     }
   ],
   "thumbnail": "00_monkey.png"

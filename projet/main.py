@@ -1,11 +1,15 @@
 import os
 import argparse
 import json
+import logging
 from dotenv import load_dotenv
 from supabase import create_client
 from generators import generate_words, generate_image, generate_video, generate_theme_music, get_dominant_color
 
 load_dotenv()
+
+debug = os.getenv('MODE') == 'DEBUG'
+logging.basicConfig(level=logging.DEBUG if debug else logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -123,6 +127,8 @@ def main():
     parser.add_argument('--color', type=str, help='Couleur en hex (ex: #10b981)')
     parser.add_argument('--populate-assets', action='store_true', help='Populer la table univers_assets avec les données existantes')
     parser.add_argument('--sync-univers-db', action='store_true', help='Synchroniser la table univers avec les données locales (musique, couleur) sans régénération')
+    parser.add_argument('--update-translations', action='store_true', help='Mettre à jour les traductions pour un thème existant (nécessite words.json)')
+    parser.add_argument('--upload-translations-only', action='store_true', help='Uploader seulement les traductions vers DB pour un thème existant (nécessite data.json)')
     args = parser.parse_args()
 
     if args.populate_assets:
@@ -131,6 +137,80 @@ def main():
 
     if args.sync_univers_db:
         sync_univers_db()
+        return
+
+    if args.update_translations:
+        if not args.theme:
+            print("Erreur : --theme est requis pour --update-translations.")
+            return
+        theme = args.theme.lower().replace(' ', '_')
+        words_file = f"storage/univers/{theme}/words.json"
+        if not os.path.exists(words_file):
+            print(f"Erreur : {words_file} n'existe pas. Lancez d'abord --words-only.")
+            return
+        with open(words_file, 'r') as f:
+            data = json.load(f)
+        words = data["words"]
+        # Regenerate translations
+        words_dict = generate_words(args.theme)
+        # Update words.json
+        with open(words_file, 'w') as f:
+            json.dump({"theme": args.theme, "words": words, "words_translations": words_dict}, f, indent=2)
+        # Update data.json if exists
+        data_file = f"storage/univers/{theme}/data.json"
+        if os.path.exists(data_file):
+            with open(data_file, 'r') as f:
+                universe_data = json.load(f)
+            items = universe_data.get("items", [])
+            for i, item in enumerate(items):
+                item["title_translations"] = {
+                    lang: words_dict[lang][i] if i < len(words_dict.get(lang, [])) else item["title"]
+                    for lang in ["fr", "en", "es", "it", "de"]
+                }
+            with open(data_file, 'w') as f:
+                json.dump(universe_data, f, indent=2)
+            logging.info(f"Traductions mises à jour pour {theme}")
+        return
+
+    if args.upload_translations_only:
+        if not args.theme:
+            print("Erreur : --theme est requis pour --upload-translations-only.")
+            return
+        theme = args.theme.lower().replace(' ', '_')
+        logging.info(f"Upload des traductions pour {theme}...")
+        data_file = f"storage/univers/{theme}/data.json"
+        if not os.path.exists(data_file):
+            print(f"Erreur : {data_file} n'existe pas.")
+            return
+        with open(data_file, 'r') as f:
+            universe_data = json.load(f)
+        items = universe_data.get("items", [])
+        if not supabase_client:
+            print("Erreur: Client Supabase non configuré")
+            return
+        # Get univers_id
+        logging.debug(f"Querying univers with slug: {theme}")
+        univers_response = supabase_client.table("univers").select("id").eq("slug", theme).execute()
+        logging.debug(f"Univers response: {univers_response.data}")
+        if not univers_response.data:
+            logging.error(f"Univers '{theme}' not found in DB")
+            return
+        univers_id = univers_response.data[0]["id"]
+        logging.debug(f"Univers ID: {univers_id}")
+        # Get existing assets
+        assets_response = supabase_client.table("univers_assets").select("id, sort_order").eq("univers_id", univers_id).execute()
+        asset_map = {asset["sort_order"]: asset["id"] for asset in assets_response.data}
+        # Upload translations
+        for i, item in enumerate(items):
+            asset_id = asset_map.get(i)
+            if asset_id:
+                translations = item.get("title_translations", {})
+                trans_data = [
+                    {"asset_id": asset_id, "language": lang, "display_name": translations.get(lang, item["title"])}
+                    for lang in ["fr", "en", "es", "it", "de"]
+                ]
+                supabase_client.table("univers_assets_translations").upsert(trans_data).execute()
+        print(f"Traductions uploadées pour {theme}")
         return
 
     if args.update_color:
@@ -162,12 +242,14 @@ def main():
     os.makedirs(f"storage/univers/{theme}", exist_ok=True)
 
     if args.words_only:
-        print(f"Génération de mots pour le thème '{args.theme}'...")
-        words = generate_words(args.theme)
-        print(f"Mots générés : {words}")
+        logging.info(f"Génération de mots pour le thème '{args.theme}'...")
+        words_dict = generate_words(args.theme, debug=debug)
+        words = words_dict["fr"]
+        logging.info(f"Mots générés : {words}")
+        logging.debug(f"Words dict: {words_dict}")
         with open(f"storage/univers/{theme}/words.json", 'w') as f:
-            json.dump({"theme": args.theme, "words": words}, f, indent=2)
-        print(f"Mots sauvegardés dans storage/univers/{theme}/words.json")
+            json.dump({"theme": args.theme, "words": words, "words_translations": words_dict}, f, indent=2)
+        logging.info(f"Mots sauvegardés dans storage/univers/{theme}/words.json")
         return
 
     # Charger les mots
@@ -207,7 +289,8 @@ def main():
 
     # Pipeline complet
     print(f"Génération de mots pour le thème '{args.theme}'...")
-    words = generate_words(args.theme)
+    words_dict = generate_words(args.theme)
+    words = words_dict["fr"]
     print(f"Mots générés : {words}")
 
     items = []
@@ -225,22 +308,42 @@ def main():
     # Sauvegarder data.json
     thumbnail = items[0]["image"] if items else ""
     color = get_dominant_color(f"storage/univers/{theme}/{thumbnail}") if thumbnail else "#ffffff"
+    # Ajouter traductions
+    for i, item in enumerate(items):
+        item["title_translations"] = {
+            lang: words_dict[lang][i] if i < len(words_dict.get(lang, [])) else item["title"]
+            for lang in ["fr", "en", "es", "it", "de"]
+        }
     with open(f"storage/univers/{theme}/data.json", 'w') as f:
-        json.dump({"thumbnail": thumbnail, "background_color": color, "items": items}, f, indent=2)
+        json.dump({"thumbnail": thumbnail, "background_color": color, "items": items, "words_translations": words_dict}, f, indent=2)
 
     # Insert into univers_assets
     if supabase_client:
         try:
-            inserts = []
-            for i, item in enumerate(items):
-                inserts.append({
-                    "univers_folder": theme,
-                    "sort_order": i,
-                    "image_name": item["image"],
-                    "display_name": item["title"]
-                })
-            supabase_client.table("univers_assets").insert(inserts).execute()
-            print(f"Inserted {len(inserts)} assets for {theme}")
+            # Récupérer univers_id
+            univers_response = supabase_client.table("univers").select("id").eq("slug", theme).execute()
+            if not univers_response.data:
+                print(f"Univers '{theme}' not found in DB")
+            else:
+                univers_id = univers_response.data[0]["id"]
+                inserts = []
+                for i, item in enumerate(items):
+                    asset_data = {
+                        "univers_id": univers_id,
+                        "sort_order": i,
+                        "image_name": item["image"],
+                        "display_name": item["title"]
+                    }
+                    # Insérer asset
+                    asset_response = supabase_client.table("univers_assets").insert(asset_data).execute()
+                    asset_id = asset_response.data[0]["id"]
+                    # Insérer traductions
+                    translations = [
+                        {"asset_id": asset_id, "language": lang, "display_name": item["title_translations"][lang]}
+                        for lang in ["fr", "en", "es", "it", "de"]
+                    ]
+                    supabase_client.table("univers_assets_translations").insert(translations).execute()
+                print(f"Inserted {len(inserts)} assets with translations for {theme}")
         except Exception as e:
             print(f"DB insert error: {e}")
 
