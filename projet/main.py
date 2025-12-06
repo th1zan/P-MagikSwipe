@@ -4,7 +4,74 @@ import json
 import logging
 from dotenv import load_dotenv
 from supabase import create_client
-from generators import generate_words, generate_image, generate_video, generate_theme_music, get_dominant_color
+from translation_generator import generate_translations
+from generators import generate_image, generate_video, generate_theme_music, get_dominant_color
+from jsonschema import validate, ValidationError
+from deep_translator import GoogleTranslator
+
+# Schema for data.json validation
+DATA_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "theme": {"type": "string"},
+        "thumbnail": {"type": "string"},
+        "background_color": {"type": "string"},
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "image": {"type": "string"},
+                    "title": {"type": "string"},
+                    "video": {"type": "string"},
+                    "title_translations": {
+                        "type": "object",
+                        "properties": {
+                            "en": {"type": "string"},
+                            "fr": {"type": "string"},
+                            "es": {"type": "string"},
+                            "it": {"type": "string"},
+                            "de": {"type": "string"}
+                        }
+                    }
+                },
+                "required": ["image", "title", "video", "title_translations"]
+            }
+        },
+        "translations": {
+            "type": "object",
+            "properties": {
+                "en": {"type": "array", "items": {"type": "string"}},
+                "fr": {"type": "array", "items": {"type": "string"}},
+                "es": {"type": "array", "items": {"type": "string"}},
+                "it": {"type": "array", "items": {"type": "string"}},
+                "de": {"type": "array", "items": {"type": "string"}}
+            }
+        },
+        "theme_translations": {
+            "type": "object",
+            "properties": {
+                "en": {"type": "string"},
+                "fr": {"type": "string"},
+                "es": {"type": "string"},
+                "it": {"type": "string"},
+                "de": {"type": "string"}
+            }
+        },
+        "univers_name": {"type": "string"},
+        "univers_translations": {
+            "type": "object",
+            "properties": {
+                "en": {"type": "string"},
+                "fr": {"type": "string"},
+                "es": {"type": "string"},
+                "it": {"type": "string"},
+                "de": {"type": "string"}
+            }
+        }
+    },
+    "required": ["theme", "items", "translations"]
+}
 
 load_dotenv()
 
@@ -129,6 +196,8 @@ def main():
     parser.add_argument('--sync-univers-db', action='store_true', help='Synchroniser la table univers avec les données locales (musique, couleur) sans régénération')
     parser.add_argument('--update-translations', action='store_true', help='Mettre à jour les traductions pour un thème existant (nécessite words.json)')
     parser.add_argument('--upload-translations-only', action='store_true', help='Uploader seulement les traductions vers DB pour un thème existant (nécessite data.json)')
+    parser.add_argument('--sync-data-from-words', action='store_true', help='Synchroniser data.json depuis words.json sans appel API (copie pure)')
+    parser.add_argument('--upload-univers-translations-only', action='store_true', help='Uploader seulement les traductions univers vers DB pour un thème existant')
     args = parser.parse_args()
 
     if args.populate_assets:
@@ -152,7 +221,8 @@ def main():
             data = json.load(f)
         words = data["words"]
         # Regenerate translations
-        words_dict = generate_words(args.theme)
+        data = generate_translations(args.theme, debug=debug)
+        words_dict = data["translations"]
         # Update words.json
         with open(words_file, 'w') as f:
             json.dump({"theme": args.theme, "words": words, "words_translations": words_dict}, f, indent=2)
@@ -170,6 +240,81 @@ def main():
             with open(data_file, 'w') as f:
                 json.dump(universe_data, f, indent=2)
             logging.info(f"Traductions mises à jour pour {theme}")
+        return
+
+    if args.upload_univers_translations_only:
+        if not args.theme:
+            print("Erreur : --theme est requis pour --upload-univers-translations-only.")
+            return
+        theme = args.theme.lower().replace(' ', '_')
+        data_file = f"storage/univers/{theme}/data.json"
+        if not os.path.exists(data_file):
+            print(f"Erreur : {data_file} n'existe pas.")
+            return
+        with open(data_file, 'r') as f:
+            data = json.load(f)
+        if not supabase_client:
+            print("Erreur: Client Supabase non configuré")
+            return
+        # Get univers_id and name
+        univers_response = supabase_client.table("univers").select("id, name").eq("slug", theme).execute()
+        if not univers_response.data:
+            logging.error(f"Univers '{theme}' not found in DB")
+            return
+        univers_id = univers_response.data[0]["id"]
+        univers_name = univers_response.data[0]["name"]
+        logging.debug(f"Using univers name for translation: {univers_name}")
+        # Upload univers translations
+        univers_translations = data.get("univers_translations", {})
+        if not univers_translations:
+            univers_translations = {"en": univers_name}
+            for lang in ["fr", "es", "it", "de"]:
+                univers_translations[lang] = GoogleTranslator(source='en', target=lang).translate(univers_name)
+        univers_trans_data = [
+            {"univers_id": univers_id, "language": lang, "name": univers_translations.get(lang, univers_name)}
+            for lang in ["en", "fr", "es", "it", "de"]
+        ]
+        supabase_client.table("univers_translations").upsert(univers_trans_data, on_conflict="univers_id,language").execute()
+        logging.info(f"Univers translations uploaded for {theme}")
+        return
+
+    if args.sync_data_from_words:
+        if not args.theme:
+            print("Erreur : --theme est requis pour --sync-data-from-words.")
+            return
+        theme = args.theme.lower().replace(' ', '_')
+        words_file = f"storage/univers/{theme}/words.json"
+        data_file = f"storage/univers/{theme}/data.json"
+        if not os.path.exists(words_file):
+            print(f"Erreur : {words_file} n'existe pas.")
+            return
+        if not os.path.exists(data_file):
+            print(f"Erreur : {data_file} n'existe pas. Lancez le pipeline complet d'abord.")
+            return
+        with open(words_file, 'r') as f:
+            words_data = json.load(f)
+        with open(data_file, 'r') as f:
+            data = json.load(f)
+        # Sync translations
+        data["theme"] = words_data["theme"]
+        data["translations"] = words_data["words_translations"]
+        data["theme_translations"] = {lang: words_data["theme"] for lang in words_data["words_translations"]}
+        data["univers_name"] = words_data["theme"].capitalize()
+        data["univers_translations"] = {lang: words_data["theme"] for lang in words_data["words_translations"]}
+        # Update title_translations
+        for i, item in enumerate(data.get("items", [])):
+            for lang in words_data["words_translations"]:
+                if i < len(words_data["words_translations"][lang]):
+                    item["title_translations"][lang] = words_data["words_translations"][lang][i]
+        # Validate and save
+        try:
+            validate(instance=data, schema=DATA_SCHEMA)
+        except ValidationError as e:
+            logging.error(f"Data validation failed: {e}")
+            raise
+        with open(data_file, 'w') as f:
+            json.dump(data, f, indent=2)
+        logging.info(f"data.json synchronisé depuis words.json pour {theme}")
         return
 
     if args.upload_translations_only:
@@ -200,6 +345,10 @@ def main():
         # Get existing assets
         assets_response = supabase_client.table("univers_assets").select("id, sort_order").eq("univers_id", univers_id).execute()
         asset_map = {asset["sort_order"]: asset["id"] for asset in assets_response.data}
+        asset_ids = list(asset_map.values())
+        # Delete existing translations for these assets to force overwrite
+        if asset_ids:
+            supabase_client.table("univers_assets_translations").delete().in_("asset_id", asset_ids).execute()
         # Upload translations
         for i, item in enumerate(items):
             asset_id = asset_map.get(i)
@@ -209,7 +358,7 @@ def main():
                     {"asset_id": asset_id, "language": lang, "display_name": translations.get(lang, item["title"])}
                     for lang in ["fr", "en", "es", "it", "de"]
                 ]
-                supabase_client.table("univers_assets_translations").upsert(trans_data).execute()
+                supabase_client.table("univers_assets_translations").insert(trans_data).execute()
         print(f"Traductions uploadées pour {theme}")
         return
 
@@ -243,7 +392,9 @@ def main():
 
     if args.words_only:
         logging.info(f"Génération de mots pour le thème '{args.theme}'...")
-        words_dict = generate_words(args.theme, debug=debug)
+        data = generate_translations(args.theme, debug=debug)
+        words = data["words"]
+        words_dict = data["translations"]
         words = words_dict["fr"]
         logging.info(f"Mots générés : {words}")
         logging.debug(f"Words dict: {words_dict}")
@@ -283,14 +434,15 @@ def main():
 
     if args.music_only:
         print("Génération de la musique...")
-        generate_theme_music(theme, args.theme)
+        generate_theme_music(theme, args.theme, languages=["fr", "en", "es", "it", "de"])
         print("Musique générée.")
         return
 
     # Pipeline complet
     print(f"Génération de mots pour le thème '{args.theme}'...")
-    words_dict = generate_words(args.theme)
-    words = words_dict["fr"]
+    data = generate_translations(args.theme, debug=debug)
+    words = data["words"]  # en
+    words_dict = data["translations"]  # includes en/fr/...
     print(f"Mots générés : {words}")
 
     items = []
@@ -314,50 +466,18 @@ def main():
             lang: words_dict[lang][i] if i < len(words_dict.get(lang, [])) else item["title"]
             for lang in ["fr", "en", "es", "it", "de"]
         }
+    data_to_save = {"theme": args.theme, "thumbnail": thumbnail, "background_color": color, "items": items, "translations": words_dict, "theme_translations": data.get("theme_translations", {}), "univers_name": data.get("univers_name", args.theme.capitalize()), "univers_translations": data.get("univers_translations", {})}
+    try:
+        validate(instance=data_to_save, schema=DATA_SCHEMA)
+    except ValidationError as e:
+        logging.error(f"Data validation failed: {e}")
+        raise
     with open(f"storage/univers/{theme}/data.json", 'w') as f:
-        json.dump({"thumbnail": thumbnail, "background_color": color, "items": items, "words_translations": words_dict}, f, indent=2)
+        json.dump(data_to_save, f, indent=2)
 
-    # Insert into univers_assets
-    if supabase_client:
-        try:
-            # Récupérer univers_id
-            univers_response = supabase_client.table("univers").select("id").eq("slug", theme).execute()
-            if not univers_response.data:
-                print(f"Univers '{theme}' not found in DB")
-            else:
-                univers_id = univers_response.data[0]["id"]
-                inserts = []
-                for i, item in enumerate(items):
-                    asset_data = {
-                        "univers_id": univers_id,
-                        "sort_order": i,
-                        "image_name": item["image"],
-                        "display_name": item["title"]
-                    }
-                    # Insérer asset
-                    asset_response = supabase_client.table("univers_assets").insert(asset_data).execute()
-                    asset_id = asset_response.data[0]["id"]
-                    # Insérer traductions
-                    translations = [
-                        {"asset_id": asset_id, "language": lang, "display_name": item["title_translations"][lang]}
-                        for lang in ["fr", "en", "es", "it", "de"]
-                    ]
-                    supabase_client.table("univers_assets_translations").insert(translations).execute()
-                print(f"Inserted {len(inserts)} assets with translations for {theme}")
-        except Exception as e:
-            print(f"DB insert error: {e}")
-
-    # Mettre à jour index.json
-    list_path = "storage/index.json"
-    if os.path.exists(list_path):
-        with open(list_path, 'r') as f:
-            themes = json.load(f)
-    else:
-        themes = []
-    if not any(t['folder'] == theme for t in themes):
-        themes.append({"name": args.theme.capitalize(), "folder": theme})
-        with open(list_path, 'w') as f:
-            json.dump(themes, f, indent=2)
+    # Upload to DB
+    from db_uploader import upload_universe_data
+    upload_universe_data(theme)
 
     print(f"Univers '{args.theme}' généré avec succès !")
 

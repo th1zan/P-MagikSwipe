@@ -7,3 +7,5 @@ replicate
 pillow
 requests
 pyyaml
+deep-translator
+jsonschema

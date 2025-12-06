@@ -5,11 +5,11 @@
       "title": "truck",
       "video": "00_truck_silent.mp4",
       "title_translations": {
-        "fr": "1. creuseur",
-        "en": "1. digger",
-        "es": "1. excavador",
-        "it": "1. scavatore",
-        "de": "1. bagger"
+        "fr": "Caminion",
+        "en": "Truckie",
+        "es": "Camioncito",
+        "it": "Camioncino",
+        "de": "LKW"
       }
     },
     {
@@ -17,11 +17,11 @@
       "title": "crane",
       "video": "01_crane_silent.mp4",
       "title_translations": {
-        "fr": "2. camion",
-        "en": "2. truck",
-        "es": "2. cami\u00f3n",
-        "it": "2. camion",
-        "de": "2. lkw"
+        "fr": "Pelle",
+        "en": "Digger",
+        "es": "Pala",
+        "it": "Pala",
+        "de": "Schaufel"
       }
     },
     {
@@ -29,11 +29,11 @@
       "title": "digger",
       "video": "02_digger_silent.mp4",
       "title_translations": {
-        "fr": "3. grue",
-        "en": "3. crane",
-        "es": "3. gr\u00faa",
-        "it": "3. gru",
-        "de": "3. kran"
+        "fr": "Carrie",
+        "en": "Carrie",
+        "es": "Carrie",
+        "it": "Carrie",
+        "de": "Carrie"
       }
     },
     {
@@ -41,11 +41,11 @@
       "title": "mixer",
       "video": "03_mixer_silent.mp4",
       "title_translations": {
-        "fr": "4. m\u00e9langeur",
-        "en": "4. mixer",
-        "es": "4. mezclador",
-        "it": "4. miscelatore",
-        "de": "4. mixer"
+        "fr": "BuzzyB",
+        "en": "BusyBee",
+        "es": "Abeja de trabajo",
+        "it": "Ape lavoro",
+        "de": "Arbeitsbiene"
       }
     },
     {
@@ -53,11 +53,11 @@
       "title": "roller",
       "video": "04_roller_silent.mp4",
       "title_translations": {
-        "fr": "5. rouleau",
-        "en": "5. roller",
-        "es": "5. rodillo",
-        "it": "5. rullo",
-        "de": "5. walze"
+        "fr": "Graine",
+        "en": "Crane",
+        "es": "Gr\u00faa",
+        "it": "Grande",
+        "de": "Kran"
       }
     },
     {
@@ -65,11 +65,11 @@
       "title": "bulldozer",
       "video": "05_bulldozer_silent.mp4",
       "title_translations": {
-        "fr": "6. bulldozer",
-        "en": "6. dozer",
-        "es": "6. topadora",
-        "it": "6. apripista",
-        "de": "6. planierraupe"
+        "fr": "D\u00e9chargeur",
+        "en": "Dumper",
+        "es": "D\u00e9bil",
+        "it": "D scarico",
+        "de": "Entleerer"
       }
     },
     {
@@ -77,11 +77,11 @@
       "title": "backhoe",
       "video": "06_backhoe_silent.mp4",
       "title_translations": {
-        "fr": "7. r\u00e9trocaveuse",
-        "en": "7. backhoe",
-        "es": "7. retroexcavadora",
-        "it": "7. terna",
-        "de": "7. baggerlader"
+        "fr": "Fourche",
+        "en": "Forkie",
+        "es": "Forki",
+        "it": "Fork",
+        "de": "Forken"
       }
     },
     {
@@ -89,11 +89,11 @@
       "title": "excavator",
       "video": "07_excavator_silent.mp4",
       "title_translations": {
-        "fr": "8. chargeur",
-        "en": "8. loader",
-        "es": "8. cargador",
-        "it": "8. caricatore",
-        "de": "8. lader"
+        "fr": "Rouleau",
+        "en": "Roller",
+        "es": "Roller",
+        "it": "Rullo",
+        "de": "Rollen"
       }
     },
     {
@@ -101,11 +101,11 @@
       "title": "forklift",
       "video": "08_forklift_silent.mp4",
       "title_translations": {
-        "fr": "9. chariot \u00e9l\u00e9vateur",
-        "en": "9. forklift",
-        "es": "9. carretilla elevadora",
-        "it": "9. carrello elevatore",
-        "de": "9. gabelstapler"
+        "fr": "Stevie",
+        "en": "Stevie",
+        "es": "Stevi",
+        "it": "Stevi",
+        "de": "Stevi"
       }
     },
     {
@@ -113,13 +113,105 @@
       "title": "cement_mixer",
       "video": "09_cement_mixer_silent.mp4",
       "title_translations": {
-        "fr": "10. b\u00e9tonni\u00e8re",
-        "en": "10. cement mixer",
-        "es": "10. mezclador de cemento",
-        "it": "10. betoniera",
-        "de": "10. betonmischer"
+        "fr": "Mixeur de ciment",
+        "en": "Cement Mixie",
+        "es": "Mezclador de cemento",
+        "it": "Mescolatore di cemento",
+        "de": "Zement-Mixer"
       }
     }
   ],
-  "thumbnail": "00_truck.png"
+  "thumbnail": "00_truck.png",
+  "theme": "vehicules_de_chantier",
+   "translations": {
+     "fr": [
+       "Caminion",
+       "Pelle",
+       "Carrie",
+       "BuzzyB",
+       "Graine",
+       "Déchargeur",
+       "Fourche",
+       "Rouleau",
+       "Stevie",
+       "Mixeur de ciment"
+     ],
+     "es": [
+       "Camioncito",
+       "Pala",
+       "Carrie",
+       "Abeja de trabajo",
+       "Grúa",
+       "Débil",
+       "Forki",
+       "Roller",
+       "Stevi",
+       "Mezclador de cemento"
+     ],
+     "it": [
+       "Camioncino",
+       "Pala",
+       "Carrie",
+       "Ape lavoro",
+       "Grande",
+       "D scarico",
+       "Fork",
+       "Rullo",
+       "Stevi",
+       "Mescolatore di cemento"
+     ],
+     "de": [
+       "LKW",
+       "Schaufel",
+       "Carrie",
+       "Arbeitsbiene",
+       "Kran",
+       "Entleerer",
+       "Forken",
+       "Rollen",
+       "Stevi",
+       "Zement-Mixer"
+     ],
+     "en": [
+       "Truckie",
+       "Digger",
+       "Carrie",
+       "BusyBee",
+       "Crane",
+       "Dumper",
+       "Forkie",
+       "Roller",
+       "Stevie",
+       "Cement Mixie"
+     ]
+   },
+   "music_translations": {
+     "fr": {
+       "lyrics": "Verse 1:\nIl est arrivé sur le chantier, un camion bien Gros\nIl est chargé de matériaux, pour construire un pont\nIl y a un grues qui soulève, des briques et des pierres\nEt un digger qui creuse, des trous pour les fondations\n\nChorus:\nVehicules de chantier, font leur job avec pride\nIls travaillent dur, pour construire des routes et des ponts\nIls sont les rois du chantier, nos amis les vehicules\nIls font tomber les murs, pour construire des maisons\n\nVerse 2:\nUn roller qui étale, du ciment sur le sol\nUn dozer qui pousse, des terres et des rochers\nIls travaillent ensemble, pour construire ",
+       "prompt": "chanson enfantine joyeuse et douce, xylophone, flûte, clochettes, percussions légères, style comptine, très mignonne et bouncy, nursery rhyme vibe, française"
+     },
+     "en": {
+       "lyrics": "",
+       "prompt": ""
+     },
+     "es": {
+       "lyrics": "",
+       "prompt": ""
+     },
+     "it": {
+       "lyrics": "",
+       "prompt": ""
+     },
+     "de": {
+       "lyrics": "",
+       "prompt": ""
+     }
+   },
+   "theme_translations": {
+     "fr": "vehicules_de_chantier",
+     "es": "vehicules_de_chantier",
+     "it": "vehicules_de_chantier",
+     "de": "vehicules_de_chantier",
+     "en": "vehicules_de_chantier"
+   }
 }

@@ -5,11 +5,11 @@
       "title": "monkey",
       "video": "00_monkey_silent.mp4",
       "title_translations": {
-        "fr": "bien s\u00fbr",
-        "en": "sure",
-        "es": "seguro",
-        "it": "sicuro",
-        "de": "sicher"
+        "fr": "Jungle",
+        "en": "Jungle",
+        "es": "Selva",
+        "it": "Giungla",
+        "de": "Dschungel"
       }
     },
     {
@@ -17,11 +17,11 @@
       "title": "tree",
       "video": "01_tree_silent.mp4",
       "title_translations": {
-        "fr": "voici dix mots simples et joyeux pour les enfants de 3 \u00e0 7 ans sur le th\u00e8me \u00ab jungle \u00bb :\n\nlion",
-        "en": "here are ten simple and joyful words for children aged 3-7 on the theme \"jungle\":\n\nlion",
-        "es": "he aqu\u00ed diez palabras sencillas y alegres para ni\u00f1os de 3 a 7 a\u00f1os sobre el tema \"jungla\":\n\nle\u00f3n",
-        "it": "ecco dieci parole semplici e gioiose per bambini dai 3 ai 7 anni sul tema \"giungla\":\n\nleone",
-        "de": "hier sind zehn einfache und fr\u00f6hliche worte f\u00fcr kinder im alter von 3 bis 7 jahren zum thema \u201edschungel\u201c:\n\nl\u00f6we"
+        "fr": "Aventure",
+        "en": "Adventure",
+        "es": "Aventura",
+        "it": "Avventura",
+        "de": "Abenteuer"
       }
     },
     {
@@ -29,11 +29,11 @@
       "title": "bird",
       "video": "02_bird_silent.mp4",
       "title_translations": {
-        "fr": "singe",
-        "en": "monkey",
-        "es": "mono",
-        "it": "scimmia",
-        "de": "affe"
+        "fr": "Singe",
+        "en": "Monkey",
+        "es": "Mono",
+        "it": "Scimmia",
+        "de": "Affe"
       }
     },
     {
@@ -41,11 +41,11 @@
       "title": "flower",
       "video": "03_flower_silent.mp4",
       "title_translations": {
-        "fr": "arbre",
-        "en": "tree",
-        "es": "\u00e1rbol",
-        "it": "albero",
-        "de": "baum"
+        "fr": "Safari",
+        "en": "Safari",
+        "es": "Safari",
+        "it": "Safari",
+        "de": "Safari"
       }
     },
     {
@@ -53,11 +53,11 @@
       "title": "snake",
       "video": "04_snake_silent.mp4",
       "title_translations": {
-        "fr": "oiseau",
-        "en": "bird",
-        "es": "p\u00e1jaro",
-        "it": "uccello",
-        "de": "vogel"
+        "fr": "Lion",
+        "en": "Lion",
+        "es": "Le\u00f3n",
+        "it": "Leone",
+        "de": "L\u00f6we"
       }
     },
     {
@@ -65,11 +65,11 @@
       "title": "lion",
       "video": "05_lion_silent.mp4",
       "title_translations": {
-        "fr": "serpent",
-        "en": "snake",
-        "es": "serpiente",
-        "it": "serpente",
-        "de": "schlange"
+        "fr": "Tigre",
+        "en": "Tiger",
+        "es": "Tigre",
+        "it": "Tigre",
+        "de": "Tiger"
       }
     },
     {
@@ -77,11 +77,11 @@
       "title": "zebra",
       "video": "06_zebra_silent.mp4",
       "title_translations": {
-        "fr": "tigre",
-        "en": "tiger",
-        "es": "tigre",
-        "it": "tigre",
-        "de": "tiger"
+        "fr": "Oiseau",
+        "en": "Bird",
+        "es": "P\u00e1jaro",
+        "it": "Uccello",
+        "de": "Vogel"
       }
     },
     {
@@ -89,11 +89,11 @@
       "title": "giraffe",
       "video": "07_giraffe_silent.mp4",
       "title_translations": {
-        "fr": "fleur",
-        "en": "flower",
-        "es": "flor",
-        "it": "fiore",
-        "de": "blume"
+        "fr": "Fleur",
+        "en": "Flower",
+        "es": "Flor",
+        "it": "Fiore",
+        "de": "Blume"
       }
     },
     {
@@ -101,11 +101,11 @@
       "title": "elephant",
       "video": "08_elephant_silent.mp4",
       "title_translations": {
-        "fr": "feuille",
-        "en": "leaf",
-        "es": "hoja",
-        "it": "foglia",
-        "de": "blatt"
+        "fr": "Arbre",
+        "en": "Tree",
+        "es": "\u00c1rbol",
+        "it": "Albero",
+        "de": "Baum"
       }
     },
     {
@@ -113,13 +113,105 @@
       "title": "butterfly",
       "video": "09_butterfly_silent.mp4",
       "title_translations": {
-        "fr": "rivi\u00e8re",
-        "en": "river",
-        "es": "r\u00edo",
-        "it": "fiume",
-        "de": "fluss"
+        "fr": "For\u00eat",
+        "en": "Forest",
+        "es": "Bosque",
+        "it": "Foresta",
+        "de": "Wald"
       }
     }
   ],
-  "thumbnail": "00_monkey.png"
+  "thumbnail": "00_monkey.png",
+  "theme": "jungle",
+  "translations": {
+    "fr": [
+      "Jungle",
+      "Aventure",
+      "Singe",
+      "Safari",
+      "Lion",
+      "Tigre",
+      "Oiseau",
+      "Fleur",
+      "Arbre",
+      "For\u00eat"
+    ],
+    "es": [
+      "Selva",
+      "Aventura",
+      "Mono",
+      "Safari",
+      "Le\u00f3n",
+      "Tigre",
+      "P\u00e1jaro",
+      "Flor",
+      "\u00c1rbol",
+      "Bosque"
+    ],
+    "it": [
+      "Giungla",
+      "Avventura",
+      "Scimmia",
+      "Safari",
+      "Leone",
+      "Tigre",
+      "Uccello",
+      "Fiore",
+      "Albero",
+      "Foresta"
+    ],
+    "de": [
+      "Dschungel",
+      "Abenteuer",
+      "Affe",
+      "Safari",
+      "L\u00f6we",
+      "Tiger",
+      "Vogel",
+      "Blume",
+      "Baum",
+      "Wald"
+    ],
+    "en": [
+      "Jungle",
+      "Adventure",
+      "Monkey",
+      "Safari",
+      "Lion",
+      "Tiger",
+      "Bird",
+      "Flower",
+      "Tree",
+      "Forest"
+    ]
+  },
+  "theme_translations": {
+    "fr": "jungle",
+    "es": "jungle",
+    "it": "jungle",
+    "de": "jungle",
+    "en": "jungle"
+  },
+  "music_translations": {
+    "fr": {
+      "lyrics": "Dans la jungle, il y a des animaux\nQui dansent et chantent toute la journ\u00e9e\nLes singes font des acrobaties\nLes oiseaux volent en harmonie",
+      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
+    },
+    "en": {
+      "lyrics": "In the jungle there are animals\nWho dance and sing all day\nMonkeys do acrobatics\nBirds fly in harmony",
+      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
+    },
+    "es": {
+      "lyrics": "En la selva hay animales.\nQue bailan y cantan todo el d\u00eda.\nLos monos hacen acrobacias.\nLos p\u00e1jaros vuelan en armon\u00eda",
+      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
+    },
+    "it": {
+      "lyrics": "Nella giungla ci sono animali\nChe ballano e cantano tutto il giorno\nLe scimmie fanno acrobazie\nGli uccelli volano in armonia",
+      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
+    },
+    "de": {
+      "lyrics": "Im Dschungel gibt es Tiere\nDie den ganzen Tag tanzen und singen\nAffen machen Akrobatik\nV\u00f6gel fliegen in Harmonie",
+      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
+    }
+  }
 }

@@ -23,17 +23,24 @@ def get_theme_description(theme_key: str) -> str:
 
 def generate_words(theme_name: str, debug=False):
     # Génère seulement en anglais
-    prompt = f'Generate exactly 10 simple and joyful words for children aged 3-7 on the theme "{theme_name}" in English. Provide them as a comma-separated list without numbering or bullets.'
+    prompt = f'Generate exactly 10 simple and joyful words for children aged 3-7 on the theme "{theme_name}" in English. Respond ONLY with a valid JSON object in this exact format: {{"words": ["word1", "word2", "word3", "word4", "word5", "word6", "word7", "word8", "word9", "word10"]}}. Do not include any other text, explanations, or formatting.'
     logging.debug(f"Sending prompt to IA: {prompt}")
-    output = replicate.run("meta/llama-2-70b-chat", input={"prompt": prompt, "temperature": 0.7, "max_tokens": 200})
+    output = replicate.run("meta/llama-2-70b-chat", input={"prompt": prompt, "temperature": 0.7, "max_tokens": 300})
     text = "".join(output)
     logging.debug(f"IA response: {text}")
-    # Nettoyer : extraire les mots après l'intro (après ":\n\n" ou similaire)
-    if ":\n\n" in text:
-        text = text.split(":\n\n", 1)[1]
-    # Utiliser regex pour extraire les mots simples
-    words = re.findall(r'\b[a-zA-Z]+\b', text)
-    en_words = [word.lower() for word in words if len(word) < 20][:10]
+    try:
+        # Try to extract JSON if embedded in text
+        json_match = re.search(r'\{.*\}', text.strip())
+        if json_match:
+            response_json = json.loads(json_match.group())
+        else:
+            response_json = json.loads(text.strip())
+        en_words = [word.lower() for word in response_json.get("words", []) if word][:10]
+        logging.debug(f"Parsed words from JSON: {en_words}")
+    except (json.JSONDecodeError, AttributeError) as e:
+        logging.error(f"Failed to parse JSON: {e}, falling back to regex")
+        words = re.findall(r'\b[a-zA-Z]+\b', text)
+        en_words = [word.lower() for word in words if len(word) < 20][:10]
     logging.debug(f"Extracted English words: {en_words}")
 
     # Traduis vers autres langues
@@ -65,7 +72,7 @@ def generate_image(word: str, theme_key: str, index: int, prompt=None):
 
 def generate_video(image_path: str, word: str, theme_key: str, index: int, motion_prompt=None):
     if motion_prompt is None:
-        motion_prompt = PROMPTS["video_motion"].format(word=word)
+        motion_prompt = PROMPTS["video_motion"].format(word=word, theme=theme_key)
 
     print(f"  → Animation SILENCIEUSE de '{word}'...")
     output = replicate.run(
@@ -103,11 +110,78 @@ def generate_video(image_path: str, word: str, theme_key: str, index: int, motio
     print(f"    Vidéo muette générée : {final_path}")
     return final_path
 
-def generate_theme_music(theme_key: str, theme_name_fr: str, music_prompt=None, lyrics=None):
-    music_path = f"storage/univers/{theme_key}/music.mp3"
-    if os.path.exists(music_path):
-        print("Musique existe déjà → ignorée")
-        return music_path
+def generate_theme_music(theme_key: str, theme_name_fr: str, music_prompt=None, lyrics=None, languages=["fr"]):
+    generated_paths = []
+
+    for lang in languages:
+        music_path = f"storage/univers/{theme_key}/music_{lang}.mp3"
+        if os.path.exists(music_path):
+            print(f"Musique {lang} existe déjà → ignorée")
+            generated_paths.append(music_path)
+            continue
+
+        # Générer/traduire lyrics
+        if lyrics is None:
+            # Charger les mots
+            words_file = f"storage/univers/{theme_key}/words.json"
+            with open(words_file, 'r', encoding='utf-8') as f:
+                words_data = json.load(f)
+            words = words_data["words"]
+
+            # Générer lyrics en fr
+            lyrics_prompt = f"Génère des paroles de chanson joyeuses pour enfants en français sur le thème '{theme_name_fr}' utilisant ces mots: {', '.join(words[:6])}. Maximum 500 caractères. Structure simple: [Verse 1] ... [Chorus] ... [Verse 2] ..."
+
+            lyrics_output = replicate.run("meta/llama-2-70b-chat", input={"prompt": lyrics_prompt, "temperature": 0.8, "max_tokens": 500})
+            lyrics_fr = "".join(lyrics_output).strip()
+
+            # Nettoyage
+            start = lyrics_fr.find("[Verse")
+            if start != -1:
+                lyrics_fr = lyrics_fr[start:]
+            lyrics_fr = lyrics_fr.replace("```", "").strip()
+            lyrics_fr = lyrics_fr[:590]
+
+            if len(lyrics_fr) < 100:
+                lyrics_fr = "[Verse 1]\nDans la jungle tout est beau\nLes animaux dansent en rond\n[Chorus]\nHop hop la jungle magique\nOn rit on chante toute la nuit\n[Verse 2]\nLes singes font des cabrioles\nLes oiseaux volent en farandole"
+        else:
+            lyrics_fr = lyrics
+
+        # Traduire lyrics pour la langue
+        if lang == "fr":
+            current_lyrics = lyrics_fr
+        else:
+            current_lyrics = GoogleTranslator(source='fr', target=lang).translate(lyrics_fr)
+
+        print(f"Paroles {lang} finales ({len(current_lyrics)} caractères) :\n{current_lyrics}")
+
+        # Musique
+        if music_prompt is None:
+            music_prompt_base = "chanson enfantine joyeuse et douce, xylophone, flûte, clochettes, percussions légères, style comptine, très mignonne et bouncy, nursery rhyme vibe"
+            if lang == "fr":
+                music_prompt = f"{music_prompt_base}, française"
+            else:
+                music_prompt = f"{music_prompt_base}, in {lang}"
+
+        output = replicate.run(
+            "minimax/music-1.5",
+            input={
+                "lyrics": current_lyrics,
+                "prompt": music_prompt,
+                "duration": 60,
+                "bitrate": 256000,
+                "sample_rate": 44100,
+                "audio_format": "mp3"
+            }
+        )
+
+        music_url = output["url"] if isinstance(output, dict) else output
+        music_data = requests.get(music_url).content
+        with open(music_path, "wb") as f:
+            f.write(music_data)
+        print(f"Musique {lang} générée : {music_path}")
+        generated_paths.append(music_path)
+
+    return generated_paths
 
     if lyrics is None:
         # Charger les mots

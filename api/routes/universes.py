@@ -144,6 +144,34 @@ def get_color(name: str):
         data = json.load(f)
     return {"color": data.get('background_color', '#ffffff')}
 
+@router.get("/universes/{name}/data")
+def get_data(name: str):
+    theme = name.lower().replace(' ', '_')
+    data_path = os.path.join(STORAGE_PATH, "univers", theme, "data.json")
+    if not os.path.exists(data_path):
+        raise HTTPException(status_code=404, detail="Universe not found")
+    with open(data_path, 'r') as f:
+        data = json.load(f)
+    return data
+
+@router.patch("/universes/{name}/data")
+def update_data(name: str, updates: dict):
+    theme = name.lower().replace(' ', '_')
+    data_path = os.path.join(STORAGE_PATH, "univers", theme, "data.json")
+    if not os.path.exists(data_path):
+        raise HTTPException(status_code=404, detail="Universe not found")
+    with open(data_path, 'r') as f:
+        data = json.load(f)
+    # Merge updates
+    for key, value in updates.items():
+        if isinstance(value, dict) and key in data:
+            data[key].update(value)
+        else:
+            data[key] = value
+    with open(data_path, 'w') as f:
+        json.dump(data, f, indent=2)
+    return {"message": "Data updated"}
+
 @router.delete("/universes/{name}")
 def delete_universe(name: str):
     theme = name.lower().replace(' ', '_')

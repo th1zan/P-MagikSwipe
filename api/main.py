@@ -13,9 +13,10 @@ app.add_middleware(
 )
 
 # Routes
-from routes import generation, universes
+from routes import generation, universes, prompts
 app.include_router(universes.router, prefix="/api", tags=["universes"])
 app.include_router(generation.router, prefix="/api", tags=["generation"])
+app.include_router(prompts.router, prefix="/api", tags=["prompts"])
 app.mount("/storage", StaticFiles(directory="/app/storage"), name="storage")
 
 if __name__ == "__main__":
