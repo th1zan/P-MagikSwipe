@@ -235,6 +235,160 @@ def generate_all_music(universe: str):
 
     return {"message": "Music generation started for all languages"}
 
+@router.post("/generate/{universe}/objects")
+def generate_universe_objects(universe: str, data: dict):
+    theme = universe.lower().replace(' ', '_')
+    prompt = data.get("prompt", "")
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Prompt required")
+
+    # Generate objects using AI
+    from projet.translation_generator import generate_translations
+    try:
+        result = generate_translations(theme, debug=False)
+        objects = result["words"]
+
+        # Save to prompts.json
+        prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+        if os.path.exists(prompts_path):
+            with open(prompts_path, 'r') as f:
+                prompts_data = json.load(f)
+        else:
+            prompts_data = {}
+
+        prompts_data["words"] = objects
+        with open(prompts_path, 'w') as f:
+            json.dump(prompts_data, f, indent=2)
+
+        return {"objects": objects}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/universes/{universe}/translations/generate")
+def generate_translations_endpoint(universe: str):
+    theme = universe.lower().replace(' ', '_')
+
+    # Load concepts from prompts.json
+    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+    if not os.path.exists(prompts_path):
+        raise HTTPException(status_code=404, detail="Prompts not found")
+
+    with open(prompts_path, 'r') as f:
+        prompts_data = json.load(f)
+
+    concepts = prompts_data.get("words", [])
+    if not concepts:
+        raise HTTPException(status_code=400, detail="No concepts found")
+
+    # Load current data.json
+    data_path = os.path.join(STORAGE_PATH, "univers", theme, "data.json")
+    if os.path.exists(data_path):
+        with open(data_path, 'r') as f:
+            data = json.load(f)
+    else:
+        data = {}
+
+    translations = {}
+    langs = ['en', 'es', 'it', 'de']
+
+    # Translate each concept
+    for lang in langs:
+        translations[lang] = []
+        for concept in concepts:
+            try:
+                translated = GoogleTranslator(source='fr', target=lang).translate(concept)
+                translations[lang].append(translated)
+            except Exception as e:
+                # Fallback to original if translation fails
+                translations[lang].append(concept)
+
+    # French is the source, so copy original concepts
+    translations['fr'] = concepts.copy()
+
+    data["translations"] = translations
+
+    # Save updated data
+    with open(data_path, 'w') as f:
+        json.dump(data, f, indent=2)
+
+    return {"message": "Translations generated", "translations": translations}
+
+@router.post("/universes/{universe}/images/prompts/generate")
+def generate_image_prompts_endpoint(universe: str, data: dict):
+    theme = universe.lower().replace(' ', '_')
+    default_prompt = data.get("defaultPrompt", "")
+
+    if not default_prompt:
+        # Load from defaults
+        defaults_path = os.path.join(STORAGE_PATH, "default_prompts.json")
+        if os.path.exists(defaults_path):
+            with open(defaults_path, 'r') as f:
+                defaults = json.load(f)
+            default_prompt = defaults.get("images", "A beautiful 3D illustration of {concept}, child-friendly, colorful...")
+
+    # Load concepts
+    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+    if not os.path.exists(prompts_path):
+        raise HTTPException(status_code=404, detail="Prompts not found")
+
+    with open(prompts_path, 'r') as f:
+        prompts_data = json.load(f)
+
+    concepts = prompts_data.get("words", [])
+    if not concepts:
+        raise HTTPException(status_code=400, detail="No concepts found")
+
+    # Generate prompts
+    image_prompts = []
+    for concept in concepts:
+        prompt = default_prompt.replace("{concept}", concept)
+        image_prompts.append(prompt)
+
+    # Save to prompts.json
+    prompts_data["images"] = image_prompts
+    with open(prompts_path, 'w') as f:
+        json.dump(prompts_data, f, indent=2)
+
+    return {"message": "Image prompts generated", "prompts": image_prompts}
+
+@router.post("/universes/{universe}/videos/prompts/generate")
+def generate_video_prompts_endpoint(universe: str, data: dict):
+    theme = universe.lower().replace(' ', '_')
+    default_prompt = data.get("defaultPrompt", "")
+
+    if not default_prompt:
+        # Load from defaults
+        defaults_path = os.path.join(STORAGE_PATH, "default_prompts.json")
+        if os.path.exists(defaults_path):
+            with open(defaults_path, 'r') as f:
+                defaults = json.load(f)
+            default_prompt = defaults.get("videos", "A short animated video of {concept}, smooth motion, child-friendly...")
+
+    # Load concepts
+    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+    if not os.path.exists(prompts_path):
+        raise HTTPException(status_code=404, detail="Prompts not found")
+
+    with open(prompts_path, 'r') as f:
+        prompts_data = json.load(f)
+
+    concepts = prompts_data.get("words", [])
+    if not concepts:
+        raise HTTPException(status_code=400, detail="No concepts found")
+
+    # Generate prompts
+    video_prompts = []
+    for concept in concepts:
+        prompt = default_prompt.replace("{concept}", concept)
+        video_prompts.append(prompt)
+
+    # Save to prompts.json
+    prompts_data["videos"] = video_prompts
+    with open(prompts_path, 'w') as f:
+        json.dump(prompts_data, f, indent=2)
+
+    return {"message": "Video prompts generated", "prompts": video_prompts}
+
 @router.post("/generate/{universe}/all")
 def generate_all_endpoint(universe: str, background_tasks: BackgroundTasks):
     background_tasks.add_task(generate_all, universe)
@@ -275,6 +429,157 @@ def regenerate_thumbnail(universe: str):
     with open(data_path, 'w') as f:
         json.dump(universe_data, f, indent=2)
     return {"message": f"Thumbnail set for {universe}"}
+
+@router.post("/universes/{universe}/images/{index}/regenerate")
+def regenerate_image(universe: str, index: int):
+    theme = universe.lower().replace(' ', '_')
+
+    # Load prompts
+    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+    if not os.path.exists(prompts_path):
+        raise HTTPException(status_code=404, detail="Prompts not found")
+
+    with open(prompts_path, 'r') as f:
+        prompts_data = json.load(f)
+
+    concepts = prompts_data.get("words", [])
+    image_prompts = prompts_data.get("images", [])
+
+    if index >= len(concepts):
+        raise HTTPException(status_code=400, detail="Invalid index")
+
+    concept = concepts[index]
+    prompt = image_prompts[index] if index < len(image_prompts) else None
+
+    # Generate image
+    generate_image(concept, theme, index, prompt)
+
+    return {"message": f"Image for {concept} regenerated"}
+
+@router.post("/universes/{universe}/videos/{index}/regenerate")
+def regenerate_video(universe: str, index: int):
+    theme = universe.lower().replace(' ', '_')
+
+    # Load prompts
+    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+    if not os.path.exists(prompts_path):
+        raise HTTPException(status_code=404, detail="Prompts not found")
+
+    with open(prompts_path, 'r') as f:
+        prompts_data = json.load(f)
+
+    concepts = prompts_data.get("words", [])
+    video_prompts = prompts_data.get("videos", [])
+
+    if index >= len(concepts):
+        raise HTTPException(status_code=400, detail="Invalid index")
+
+    concept = concepts[index]
+    prompt = video_prompts[index] if index < len(video_prompts) else None
+
+    # Check if image exists for video generation
+    img_path = f"{STORAGE_PATH}/univers/{theme}/{index:02d}_{concept.replace(' ', '_')}.png"
+    if not os.path.exists(img_path):
+        raise HTTPException(status_code=404, detail="Image not found - generate image first")
+
+    # Generate video
+    generate_video(img_path, concept, theme, index, prompt)
+
+    return {"message": f"Video for {concept} regenerated"}
+
+@router.post("/universes/{universe}/rename-media")
+def rename_media_endpoint(universe: str):
+    theme = universe.lower().replace(' ', '_')
+
+    # Load prompts for concepts
+    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+    if not os.path.exists(prompts_path):
+        raise HTTPException(status_code=404, detail="Prompts not found")
+
+    with open(prompts_path, 'r') as f:
+        prompts_data = json.load(f)
+
+    concepts = prompts_data.get("words", [])
+    if not concepts:
+        raise HTTPException(status_code=400, detail="No concepts found")
+
+    # Load data for items
+    data_path = os.path.join(STORAGE_PATH, "univers", theme, "data.json")
+    if not os.path.exists(data_path):
+        raise HTTPException(status_code=404, detail="Data not found")
+
+    with open(data_path, 'r') as f:
+        data = json.load(f)
+
+    items = data.get("items", [])
+    if not items:
+        raise HTTPException(status_code=400, detail="No items found")
+
+    renamed_count = 0
+    for i, concept in enumerate(concepts[:len(items)]):
+        if not concept.strip():
+            continue
+
+        old_image = items[i].get("image", "")
+        old_video = items[i].get("video", "")
+
+        new_base = f"{i:02d}_{concept.replace(' ', '_')}"
+        new_image = f"{new_base}.png"
+        new_video = f"{new_base}_silent.mp4"  # Keep .mp4 in data
+
+        # Rename image
+        old_image_path = os.path.join(STORAGE_PATH, "univers", theme, old_image)
+        new_image_path = os.path.join(STORAGE_PATH, "univers", theme, new_image)
+        if os.path.exists(old_image_path) and old_image != new_image:
+            if os.path.exists(new_image_path):
+                # Conflict, add suffix
+                base, ext = os.path.splitext(new_image)
+                counter = 1
+                while os.path.exists(os.path.join(STORAGE_PATH, "univers", theme, f"{base}_{counter}{ext}")):
+                    counter += 1
+                new_image = f"{base}_{counter}{ext}"
+                new_image_path = os.path.join(STORAGE_PATH, "univers", theme, new_image)
+            os.rename(old_image_path, new_image_path)
+            renamed_count += 1
+
+        # Rename video webm
+        old_video_webm = old_video.replace('.mp4', '.webm') if old_video else ""
+        new_video_webm = new_video.replace('.mp4', '.webm')
+        old_video_path = os.path.join(STORAGE_PATH, "univers", theme, old_video_webm)
+        new_video_path = os.path.join(STORAGE_PATH, "univers", theme, new_video_webm)
+        if os.path.exists(old_video_path) and old_video_webm != new_video_webm:
+            if os.path.exists(new_video_path):
+                base, ext = os.path.splitext(new_video_webm)
+                counter = 1
+                while os.path.exists(os.path.join(STORAGE_PATH, "univers", theme, f"{base}_{counter}{ext}")):
+                    counter += 1
+                new_video_webm = f"{base}_{counter}{ext}"
+                new_video_path = os.path.join(STORAGE_PATH, "univers", theme, new_video_webm)
+            os.rename(old_video_path, new_video_path)
+
+        # Rename video mp4
+        old_mp4_path = os.path.join(STORAGE_PATH, "univers", theme, old_video)
+        new_mp4_path = os.path.join(STORAGE_PATH, "univers", theme, new_video)
+        if os.path.exists(old_mp4_path) and old_video != new_video:
+            if os.path.exists(new_mp4_path):
+                base, ext = os.path.splitext(new_video)
+                counter = 1
+                while os.path.exists(os.path.join(STORAGE_PATH, "univers", theme, f"{base}_{counter}{ext}")):
+                    counter += 1
+                new_video = f"{base}_{counter}{ext}"
+                new_mp4_path = os.path.join(STORAGE_PATH, "univers", theme, new_video)
+            os.rename(old_mp4_path, new_mp4_path)
+
+        # Update items
+        items[i]["image"] = new_image
+        items[i]["video"] = new_video
+        items[i]["title"] = concept
+
+    # Save data
+    with open(data_path, 'w') as f:
+        json.dump(data, f, indent=2)
+
+    return {"message": f"Renamed {renamed_count} media files", "renamed": renamed_count}
 
 @router.get("/status/{task_id}")
 def get_status(task_id: str):

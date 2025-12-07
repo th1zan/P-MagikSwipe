@@ -2,7 +2,6 @@
   "theme": "jungle",
   "description": "A magical universe of jungle, filled with wonderful creatures, adventures, and joy for children.",
   "words": [
-    "monkey",
     "tree",
     "bird",
     "flower",
@@ -11,7 +10,8 @@
     "zebra",
     "giraffe",
     "elephant",
-    "butterfly"
+    "butterfly",
+    "singe"
   ],
   "images": [
     "A beautiful, colorful illustration of monkey in a magical jungle setting, perfect for children, vibrant and enchanting.",

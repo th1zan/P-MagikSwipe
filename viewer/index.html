@@ -1,832 +1,1277 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Magik Univers ✨</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23ff6b6b'/></svg>">
+  <title>Magik Univers - Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:#000; }
-
-    /* Swipe uniquement où c'est nécessaire → tout est cliquable partout ailleurs */
-    #gallery, #left-zone, #right-zone, #slide-bar { touch-action: pan-x pan-y; }
-
-    #gallery { height:100vh; perspective: 1000px; display: none; }
-
-    .card { 
-      position:absolute; top:50%; left:50%; 
-      width:88vw; max-width:500px; 
-      height:78vh; 
-      transform:translate(-50%, -50%) translateX(0) scale(0.9) rotate(0);
-      transition:all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      border-radius:32px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.9);
-      cursor:pointer;
+    * { box-sizing: border-box; }
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
     }
-    .card img, .card video { width:100%; height:100%; object-fit:cover; }
-    .title { 
-      position:absolute; bottom:30px; left:0; right:0; 
-      font-size:48px; font-weight:900; color:white; text-align:center;
-      text-shadow: 0 4px 20px rgba(0,0,0,0.9);
-      pointer-events:none;
-      font-family:system-ui;
-    }
-    #indicators {
+    
+    /* Toast Notifications */
+    .toast {
       position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 10px;
-      z-index: 20;
-    }
-    .indicator {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.5);
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .indicator.active { background: white; }
-    #left-zone, #right-zone {
-      position: fixed;
-      top: 0;
-      height: 100vh;
-      width: 25vw;
-      z-index: 15;
-      cursor: pointer;
-    }
-    #left-zone { left: 0; }
-    #right-zone { right: 0; }
-    #menu-button {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      border: none;
-      padding: 10px;
-      border-radius: 50%;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 20;
-    }
-    #menu-popup {
-      position: fixed;
-      bottom: 80px;
-      left: 20px;
-      background: rgba(0,0,0,0.9);
-      color: white;
-      padding: 20px;
-      border-radius: 16px;
-      display: none;
-      z-index: 30;
-      backdrop-filter: blur(10px);
-    }
-    #slide-bar {
-      width: 200px;
-      height: 10px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 5px;
-      position: relative;
-      margin-top: 10px;
-    }
-    #slide-handle {
-      width: 24px;
-      height: 24px;
+      top: 20px;
+      right: 20px;
       background: white;
-      border-radius: 50%;
-      position: absolute;
-      top: -7px;
-      left: 0;
-      cursor: pointer;
+      padding: 16px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      z-index: 9999;
+      animation: slideIn 0.3s ease;
+      max-width: 400px;
     }
-
-    /* ====================== SETTINGS – VERSION FINALE, SUPERBE & 100% CLIQUABLE ====================== */
-    #settings {
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    /* Modal Overlay */
+    .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.96);
-      z-index: 9999;
-      display: none; /* caché au départ */
-      align-items: flex-start;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
       justify-content: center;
-      padding: 20px 10px;
+      padding: 20px;
+      animation: fadeIn 0.2s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
       overflow-y: auto;
+      animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    #settings .panel {
-      background: #111;
-      border: 1px solid #333;
-      border-radius: 24px;
+    @keyframes scaleIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    
+    /* Asset Grid */
+    .asset-card {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .asset-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+    }
+    .asset-card img, .asset-card video {
       width: 100%;
-      max-width: 800px;
-      padding: 30px 25px;
-      box-shadow: 0 20px 100px rgba(0,0,0,0.8);
+      height: 200px;
+      object-fit: cover;
     }
-    #settings h2 {
-      font-size: 32px;
-      font-weight: 900;
-      text-align: center;
-      margin-bottom: 30px;
-      color: #ff6b6b;
-    }
-    #settings label {
-      display: block;
-      margin: 20px 0 8px;
-      font-size: 18px;
+    .asset-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
       font-weight: 600;
-      color: #aaa;
+      backdrop-filter: blur(10px);
     }
-    #settings input, #settings select, #settings textarea {
-      width: 100%;
-      padding: 14px 16px;
-      background: #222;
-      border: 1px solid #444;
-      border-radius: 12px;
-      color: white;
-      font-size: 17px;
+    .status-ready { background: rgba(34,197,94,0.9); color: white; }
+    .status-generating { background: rgba(59,130,246,0.9); color: white; }
+    .status-pending { background: rgba(156,163,175,0.9); color: white; }
+    .status-error { background: rgba(239,68,68,0.9); color: white; }
+    
+    /* Progress Bar */
+    .progress-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 4px;
+      overflow: hidden;
     }
-    #settings textarea {
-      min-height: 100px;
-      resize: vertical;
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #34d399);
+      transition: width 0.3s;
     }
-    #settings .btn {
-      padding: 14px 24px;
-      margin: 8px;
-      border-radius: 12px;
-      font-size: 18px;
+    
+    /* Tabs */
+    .tab-btn {
+      padding: 12px 24px;
+      border-bottom: 3px solid transparent;
       font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
       transition: all 0.2s;
     }
-    #settings .btn-blue   { background:#3b82f6; }
-    #settings .btn-green  { background:#22c55e; }
-    #settings .btn-purple { background:#a855f7; }
-    #settings .btn-red    { background:#ef4444; }
-    #settings .btn-gray   { background:#4b5563; }
-    #settings .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-    #settings .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 15px 0; }
-    @media (min-width: 640px) { #settings .grid { grid-template-columns: 1fr 1fr; } }
-    .tab-content { display: none; }
-    .tab-content:not(.hidden) { display: block; }
-    .active { border-color: #3b82f6 !important; }
+    .tab-btn:hover { color: #374151; }
+    .tab-btn.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: #667eea; color: white; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-secondary { background: #6b7280; color: white; }
+
+    /* Slideshow */
+    .btn-slideshow {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      background: rgba(255,255,255,0.8);
+      color: #333;
+      transition: all 0.2s;
+    }
+    .btn-slideshow:hover { background: rgba(255,255,255,1); transform: scale(1.05); }
+
+    #slideshowMode .asset-card {
+      border-radius: 20px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    #slideshowMode .asset-card:hover { transform: scale(1.05); }
+    #slideshowMode .asset-card img { width: 100%; height: 150px; object-fit: cover; }
+    #slideshowMode .asset-title {
+      padding: 8px;
+      text-align: center;
+      font-weight: bold;
+      color: #333;
+      font-size: 14px;
+    }
+
+    /* Input */
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: border 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    
+    /* Spinner */
+    .spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
-<body class="bg-black text-white">
+<body>
 
-   <!-- Theme Selector -->
-   <div id="selector" class="fixed inset-0 bg-gradient-to-b from-black/90 to-transparent z-50 flex flex-col items-center justify-center">
-     <h1 class="text-5xl text-white mb-8">Magik Univers</h1>
-     <div id="themeButtons" class="flex flex-wrap justify-center gap-4 mb-8"></div>
-     <button onclick="showSettings()" class="text-xl p-4 rounded-full bg-blue-500/20 backdrop-blur-lg text-white border border-blue-300">⚙️ Settings</button>
-   </div>
+  <!-- Main Container -->
+  <div class="max-w-7xl mx-auto p-6">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">✨ Magik Univers Admin</h1>
+          <p class="text-gray-600 mt-1">Create and manage your magical universes</p>
+        </div>
+         <div class="flex gap-3">
+           <button onclick="showCreateModal()" class="btn btn-primary">
+             ➕ New Universe
+           </button>
+           <button onclick="enterSlideshow()" class="btn btn-success">
+             🎠 Slideshow
+           </button>
+           <button onclick="window.location.href='/'" class="btn btn-secondary">
+             🏠 Gallery
+           </button>
+         </div>
+      </div>
+      
+      <!-- Universe Selector -->
+      <div class="mt-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Select Universe</label>
+        <select id="universeSelect" onchange="loadUniverse(this.value)" class="max-w-md">
+          <option value="">Choose a universe...</option>
+        </select>
+      </div>
+    </div>
 
-   <!-- NEW SETTINGS PANEL (100% clickable, beautiful, mobile-perfect) -->
-   <div id="settings">
-     <div class="panel">
-       <h2>Magik Settings</h2>
+    <!-- Universe Overview (visible when universe selected) -->
+    <div id="overviewPanel" class="hidden bg-white rounded-2xl shadow-xl p-6 mb-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Overview</h2>
+      
+      <div id="universeInfo" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Will be populated dynamically -->
+      </div>
+      
+      <!-- Description -->
+      <div class="mt-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Universe Description</label>
+         <textarea id="descriptionInput" placeholder="A magical world where..."></textarea>
+         <button onclick="saveDescription()" class="btn btn-success mt-2">💾 Save Description</button>
+         <button onclick="renameMediaFiles()" class="btn btn-secondary mt-2">🔄 Rename Media Files</button>
+      </div>
+    </div>
 
-       <label>Create a new universe</label>
-       <div class="grid gap-3">
-         <input id="newUniverseName" type="text" placeholder="Universe name (ex: Car)">
-         <input id="newUniverseTheme" type="text" placeholder="Theme for generation (ex: red Ferrari car, Tesla)">
-         <button onclick="createUniverse()" class="btn btn-blue">Create</button>
-       </div>
+    <!-- Tabs -->
+    <div id="tabsPanel" class="hidden bg-white rounded-2xl shadow-xl mb-6">
+      <div class="flex border-b overflow-x-auto">
+        <button class="tab-btn active" onclick="switchTab('concepts')">Concepts</button>
+        <button class="tab-btn" onclick="switchTab('translations')">Translations</button>
+        <button class="tab-btn" onclick="switchTab('images')">Images</button>
+        <button class="tab-btn" onclick="switchTab('videos')">Videos</button>
+        <button class="tab-btn" onclick="switchTab('music')">Music</button>
+      </div>
 
-       <label>Select a universe to edit</label>
-       <select id="universeSelect">
-         <option value="">Choose a universe...</option>
-       </select>
-
-       <label>Global description</label>
-       <textarea id="descriptionTextarea" placeholder="A mysterious world where..."></textarea>
-
-       <!-- Tabs -->
-       <div class="flex border-b mb-4">
-         <button onclick="showTab('objects')" class="px-4 py-2 border-b-2 border-transparent hover:border-blue-500" id="tab-objects">Objects</button>
-         <button onclick="showTab('images')" class="px-4 py-2 border-b-2 border-transparent hover:border-blue-500" id="tab-images">Images</button>
-         <button onclick="showTab('videos')" class="px-4 py-2 border-b-2 border-transparent hover:border-blue-500" id="tab-videos">Videos</button>
-         <button onclick="showTab('music')" class="px-4 py-2 border-b-2 border-transparent hover:border-blue-500" id="tab-music">Music</button>
-         <button onclick="showTab('translations')" class="px-4 py-2 border-b-2 border-transparent hover:border-blue-500" id="tab-translations">Translations</button>
-       </div>
-
-       <!-- Objects Section -->
-       <div id="section-objects" class="tab-content">
-         <label>Default prompt to generate objects</label>
-         <textarea id="objectsDefaultPrompt" placeholder="Generate 10 simple objects for children related to the theme..."></textarea>
-         <button onclick="generateObjects()" class="btn btn-blue mt-2">Generate Objects</button>
-         <div id="objectsContainer" class="grid mt-4"></div>
-       </div>
-
-       <!-- Images Section -->
-       <div id="section-images" class="tab-content hidden">
-         <label>Default prompt for images</label>
-         <textarea id="imagesDefaultPrompt" placeholder="A beautiful illustration of {object}..."></textarea>
-         <button onclick="generateImagePrompts()" class="btn btn-blue mt-2">Generate Image Prompts</button>
-         <div id="imagesContainer" class="grid mt-4"></div>
-       </div>
-
-       <!-- Videos Section -->
-       <div id="section-videos" class="tab-content hidden">
-         <label>Default prompt for videos</label>
-         <textarea id="videosDefaultPrompt" placeholder="A short animated video of {object}..."></textarea>
-         <button onclick="generateVideoPrompts()" class="btn btn-blue mt-2">Generate Video Prompts</button>
-         <div id="videosContainer" class="grid mt-4"></div>
-       </div>
-
-         <!-- Translations Section -->
-        <div id="section-translations" class="tab-content hidden">
-          <label>Edit Translations</label>
-          <button onclick="saveTranslations()" class="btn btn-green mt-2">Save Translations</button>
-          <div id="translationsContainer" class="grid mt-4"></div>
+      <!-- Tab Content Container -->
+      <div class="p-6">
+        
+        <!-- CONCEPTS TAB -->
+        <div id="tab-concepts" class="tab-content">
+          <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Default AI Prompt</label>
+            <textarea id="conceptsDefaultPrompt" placeholder="Generate 10 simple concepts for children related to..."></textarea>
+            <div class="flex gap-2 mt-3">
+              <button onclick="generateConcepts()" class="btn btn-primary">🤖 Generate with AI</button>
+              <button onclick="addConceptManually()" class="btn btn-secondary">➕ Add Manually</button>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Current Concepts (<span id="conceptCount">0</span>)</h3>
+          </div>
+          <div id="conceptsList" class="space-y-2">
+            <!-- Will be populated dynamically -->
+          </div>
+          
+          <button onclick="saveConcepts()" class="btn btn-success mt-4">💾 Save Concepts</button>
         </div>
 
-         <!-- Music Section -->
-         <div id="section-music" class="tab-content hidden">
-           <label>Default prompt for music</label>
-           <textarea id="musicDefaultPrompt" placeholder="Joyful children's song about {theme}, with bouncy melody and fun lyrics."></textarea>
-           <button onclick="generateMusicPrompts()" class="btn btn-blue mt-2">Generate Prompts from Default</button>
-           <button onclick="openLyricsModal()" class="btn btn-green mt-2">Generate Lyrics</button>
-           <button onclick="generateAllMusic()" class="btn btn-purple mt-2">Generate All Music</button>
-           <label>Edit Music per Language</label>
-           <button onclick="saveMusic()" class="btn btn-green mt-2">Save Music</button>
-           <div id="musicContainer" class="grid mt-4"></div>
-         </div>
+        <!-- TRANSLATIONS TAB -->
+        <div id="tab-translations" class="tab-content hidden">
+          <div class="mb-6">
+            <button onclick="autoTranslateAll()" class="btn btn-primary">🤖 Auto-Translate All</button>
+          </div>
+          <div id="translationsList">
+            <!-- Will be populated dynamically -->
+          </div>
+          <button onclick="saveTranslations()" class="btn btn-success mt-4">💾 Save Translations</button>
+        </div>
 
-         <div class="flex flex-wrap justify-center gap-4 mt-12">
-           <button onclick="savePrompts()" class="btn btn-green">Save All</button>
-           <button onclick="saveDefaults()" class="btn btn-blue">Save Defaults</button>
-           <button onclick="regeneratePrompts()" class="btn btn-blue">Regenerate Prompts</button>
-           <button onclick="generateImages()" class="btn btn-purple">Images</button>
-           <button onclick="generateVideos()" class="btn btn-purple">Videos</button>
-           <button onclick="generateMusic()" class="btn btn-purple">Music</button>
-           <button onclick="generateAll()" class="btn btn-red">Generate ALL</button>
-           <button onclick="deleteUniverse()" class="btn btn-red">Delete Universe</button>
-           <button onclick="hideSettings()" class="btn btn-gray">Close</button>
-         </div>
-     </div>
+        <!-- IMAGES TAB -->
+        <div id="tab-images" class="tab-content hidden">
+          <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Default Image Prompt</label>
+            <textarea id="imagesDefaultPrompt" placeholder="A beautiful 3D illustration of {concept}, child-friendly, colorful..."></textarea>
+            <div class="flex gap-2 mt-3 flex-wrap">
+              <button onclick="generateImagePrompts()" class="btn btn-primary">🤖 Generate All Prompts</button>
+              <button onclick="generateAllImages()" class="btn btn-success">🎨 Generate All Images</button>
+            </div>
+          </div>
+          
+          <div id="imagesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Will be populated dynamically -->
+          </div>
+        </div>
+
+        <!-- VIDEOS TAB -->
+        <div id="tab-videos" class="tab-content hidden">
+          <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Default Video Prompt</label>
+            <textarea id="videosDefaultPrompt" placeholder="A short animated video of {concept}, smooth motion, child-friendly..."></textarea>
+            <div class="flex gap-2 mt-3 flex-wrap">
+              <button onclick="generateVideoPrompts()" class="btn btn-primary">🤖 Generate All Prompts</button>
+              <button onclick="generateAllVideos()" class="btn btn-success">🎬 Generate All Videos</button>
+            </div>
+          </div>
+          
+          <div id="videosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Will be populated dynamically -->
+          </div>
+        </div>
+
+        <!-- MUSIC TAB -->
+        <div id="tab-music" class="tab-content hidden">
+          <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Music Strategy</label>
+            <div class="flex gap-4">
+              <label class="flex items-center gap-2">
+                <input type="radio" name="musicStrategy" value="single" checked>
+                <span>Single music for all languages</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="radio" name="musicStrategy" value="multiple">
+                <span>Unique music per language</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="mb-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
+            <h3 class="text-lg font-bold text-purple-900 mb-3">🇫🇷 French (Master)</h3>
+             <label class="block text-sm font-semibold text-gray-700 mb-2">Lyrics</label>
+             <textarea id="musicLyricsFr" placeholder="Dans le monde magique..." onchange="updateMusicLyrics('fr', this.value)"></textarea>
+
+             <label class="block text-sm font-semibold text-gray-700 mb-2 mt-4">Music Style Prompt</label>
+             <input id="musicPromptFr" type="text" placeholder="Joyful children's song, bouncy melody..." onchange="updateMusicPrompt('fr', this.value)">
+            
+            <div class="flex gap-2 mt-3 flex-wrap">
+              <button onclick="translateLyrics()" class="btn btn-primary">🌍 Translate to All</button>
+              <button onclick="generateMusic('fr')" class="btn btn-success">🎵 Generate Music</button>
+            </div>
+          </div>
+
+           <div id="musicOtherLangs" class="space-y-4">
+             <!-- Other languages will be populated here -->
+           </div>
+
+           <button onclick="saveMusic()" class="btn btn-success mt-4">💾 Save Music Data</button>
+        </div>
+
+      </div>
+    </div>
+
    </div>
 
-   <!-- Lyrics Input Modal -->
-   <div id="lyricsModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
-     <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
-       <h3 class="text-xl mb-4 text-white">Enter Custom Lyrics (French)</h3>
-       <textarea id="customLyricsInput" placeholder="Enter lyrics in French..." rows="6" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"></textarea>
-       <div class="flex gap-2 mt-4">
-         <button onclick="generateLyricsFromCustom()" class="btn btn-green">Generate & Translate</button>
-         <button onclick="closeLyricsModal()" class="btn btn-gray">Cancel</button>
+   <!-- SLIDESHOW MODE -->
+   <div id="slideshowMode" class="hidden fixed inset-0 bg-gradient-to-br from-pink-200 via-purple-200 to-indigo-200 z-50">
+     <div class="relative h-full flex flex-col">
+       <!-- Header -->
+       <div class="flex justify-between items-center p-4 bg-white/20 backdrop-blur-sm">
+         <button onclick="exitSlideshow()" class="btn-slideshow">⬅️ Back</button>
+         <div class="flex gap-2">
+           <select id="langSelect" onchange="changeLanguage(this.value)" class="btn-slideshow">
+             <option value="fr">🇫🇷 FR</option>
+             <option value="en">🇺🇸 EN</option>
+             <option value="es">🇪🇸 ES</option>
+             <option value="it">🇮🇹 IT</option>
+             <option value="de">🇩🇪 DE</option>
+           </select>
+           <button id="muteBtn" onclick="toggleMute()" class="btn-slideshow">🔊</button>
+         </div>
        </div>
+
+       <!-- Images Grid -->
+       <div class="flex-1 p-4 overflow-auto">
+         <div id="imagesGridSlideshow" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+           <!-- Images will be populated here -->
+         </div>
+       </div>
+
+       <!-- Background Music -->
+       <audio id="bgMusic" loop preload="none"></audio>
      </div>
    </div>
 
-   <div id="gallery"></div>
-  <div id="indicators"></div>
-  <div id="left-zone"></div>
-  <div id="right-zone"></div>
-
-  <button id="menu-button">☰</button>
-  <button id="mute-button" class="fixed bottom-4 right-4 z-50 bg-black/50 text-white p-3 rounded-full text-2xl" onclick="toggleMute()">🔊</button>
-
-   <div id="menu-popup">
-     <h3>Swipe to go back</h3>
-     <div id="slide-bar"><div id="slide-handle"></div></div>
+   <!-- VIDEO MODAL -->
+   <div id="videoModal" class="hidden fixed inset-0 bg-black/80 z-60 flex items-center justify-center">
+     <div class="relative max-w-4xl w-full mx-4">
+       <button onclick="closeVideoModal()" class="absolute -top-10 right-0 text-white text-2xl">✕</button>
+       <video id="videoPlayer" controls class="w-full rounded-lg"></video>
+     </div>
    </div>
 
-  <audio id="bgMusic" loop></audio>
+   <!-- CREATE UNIVERSE MODAL -->
+   <div id="createModal" class="hidden"></div>
+
+  <!-- ASSET DETAIL MODAL -->
+  <div id="assetModal" class="hidden"></div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer"></div>
 
   <script>
-    let current = 0;
-    let cards = [];
-    let bgAudio = document.getElementById("bgMusic");
-    let isMuted = false;
+    console.log('Magik Univers Admin — Script chargé !', new Date().toISOString());
+
     let currentUniverse = null;
+    let universeData = null;
+    let currentLang = 'fr';
+    let isMuted = false;
+    const API_BASE = 'http://localhost:8000/api';
 
-    // === ÉTAT INITIAL PARFAIT (aucun bug au refresh) ===
-    document.getElementById("gallery").style.display = "none";
-    document.getElementById("settings").style.display = "none";
-    document.getElementById("selector").style.display = "flex";
-
-    // === POPULATE PROMPTS (clean modern version) ===
-    function populateObjects(objects) {
-       const c = document.getElementById("objectsContainer");
-       c.innerHTML = "";
-       objects.forEach((obj, i) => {
-         c.innerHTML += `<div><input class="text-sm text-gray-400 font-medium border p-1 rounded" value="${obj}" onchange="updateObject(${i}, this.value)"></div>`;
-       });
+    // ====================== TOAST ======================
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<div class="flex items-center gap-3">
+        <span class="text-2xl">${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info'}</span>
+        <span>${message}</span>
+      </div>`;
+      document.getElementById('toastContainer').appendChild(toast);
+      setTimeout(() => toast.remove(), 5000);
     }
 
-    function populateImages(words, images) {
-       const c = document.getElementById("imagesContainer");
-       c.innerHTML = "";
-       words.forEach((w, i) => {
-         c.innerHTML += `<div><label class="text-sm text-gray-400 font-medium">${w}</label><textarea class="mt-1" placeholder="Custom image prompt...">${images[i] || ""}</textarea></div>`;
-       });
+    // ====================== INIT ======================
+    async function init() {
+      console.log('init() → Démarrage de l’initialisation');
+      await loadUniversesList();
+      console.log('Initialisation terminée');
     }
 
-    function populateVideos(words, videos) {
-       const c = document.getElementById("videosContainer");
-       c.innerHTML = "";
-       words.forEach((w, i) => {
-         c.innerHTML += `<div><label class="text-sm text-gray-400 font-medium">${w}</label><textarea class="mt-1" placeholder="Video motion prompt...">${videos[i] || ""}</textarea></div>`;
-       });
-    }
-
-    function populateTranslations(words, translations) {
-       const c = document.getElementById("translationsContainer");
-       c.innerHTML = "";
-       words.forEach((w, i) => {
-         let html = `<div class="mb-4"><h4 class="text-lg font-semibold">${w}</h4>`;
-         ["en", "fr", "es", "it", "de"].forEach(lang => {
-           const trans = translations[lang] ? translations[lang][i] || "" : "";
-           html += `<label class="block text-sm text-gray-400">${lang.toUpperCase()}: <input class="mt-1 border p-1 rounded w-full" value="${trans}"></label>`;
-         });
-         html += `</div>`;
-         c.innerHTML += html;
-        });
-     }
-
-      function populateMusic(musicTranslations) {
-         const c = document.getElementById("musicContainer");
-         c.innerHTML = "";
-         ["fr", "en", "es", "it", "de"].forEach(lang => {
-           const music = musicTranslations[lang] || { lyrics: "", prompt: "" };
-           let html = `<div class="mb-4"><h4 class="text-lg font-semibold">${lang.toUpperCase()}</h4>`;
-           html += `<label class="block text-sm text-gray-400">Lyrics: <textarea class="mt-1 border p-1 rounded w-full" rows="4">${music.lyrics}</textarea></label>`;
-           html += `<label class="block text-sm text-gray-400 mt-2">Prompt: <input class="mt-1 border p-1 rounded w-full" value="${music.prompt}"></label>`;
-           html += `<div class="flex gap-2 mt-2">`;
-           html += `<button onclick="regenerateLyrics('${lang}')" class="btn btn-blue">Regenerate Lyrics</button>`;
-           html += `<button onclick="generateMusic('${lang}')" class="btn btn-purple">Generate Music</button>`;
-           html += `</div>`;
-           html += `</div>`;
-           c.innerHTML += html;
-         });
-      }
-
-     // === SETTINGS FUNCTIONS ===
-    function showSettings() {
-       document.getElementById("selector").style.display = "none";
-       document.getElementById("gallery").style.display = "none";
-       document.getElementById("settings").style.display = "flex";
-       loadUniverses();
-       loadDefaults();
-       showTab('objects'); // Default tab
-    }
-
-    function hideSettings() {
-       document.getElementById("settings").style.display = "none";
-       document.getElementById("selector").style.display = "flex";
-    }
-
-    function showTab(tab) {
-       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-       document.getElementById(`section-${tab}`).classList.remove('hidden');
-       document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.remove('active'));
-       document.getElementById(`tab-${tab}`).classList.add('active');
-    }
-
-    async function loadUniverses() {
+    async function loadUniversesList() {
+      console.log('loadUniversesList() → Récupération de la liste des univers');
       try {
-        const res = await fetch("/api/universes");
+        const res = await fetch(`${API_BASE}/universes`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const universes = await res.json();
-        const select = document.getElementById("universeSelect");
+        const select = document.getElementById('universeSelect');
         select.innerHTML = '<option value="">Choose a universe...</option>';
         universes.forEach(u => {
-          const opt = document.createElement("option");
+          const opt = document.createElement('option');
           opt.value = u.folder;
           opt.textContent = u.name;
           select.appendChild(opt);
         });
+        console.log(`${universes.length} univers trouvés`);
+      } catch (e) {
+        console.error('Erreur chargement univers:', e);
+        showToast('Impossible de charger les univers', 'error');
+      }
+    }
+
+    async function loadUniverse(folder) {
+      if (!folder) {
+        document.getElementById('overviewPanel').classList.add('hidden');
+        document.getElementById('tabsPanel').classList.add('hidden');
+        return;
+      }
+      currentUniverse = folder;
+      console.log('Chargement de l’univers:', folder);
+      try {
+        const [promptsRes, dataRes, defaultsRes] = await Promise.all([
+          fetch(`${API_BASE}/universes/${folder}/prompts`),
+          fetch(`${API_BASE}/universes/${folder}/data`),
+          fetch(`${API_BASE}/default-prompts`)
+        ]);
+        const prompts = await promptsRes.json();
+        const data = await dataRes.json();
+        const defaults = await defaultsRes.json();
+
+        universeData = {
+          objects: prompts.words || [],
+          images: prompts.images || [],
+          videos: prompts.videos || [],
+          items: data.items || [], // Add items for correct file paths
+          description: data.description || '',
+          translations: data.translations || {},
+          music_translations: data.music_translations || {}
+        };
+
+        document.getElementById('overviewPanel').classList.remove('hidden');
+        document.getElementById('tabsPanel').classList.remove('hidden');
+
+        document.getElementById('descriptionInput').value = universeData.description;
+        document.getElementById('conceptsDefaultPrompt').value = defaults.objects || '';
+        document.getElementById('imagesDefaultPrompt').value = defaults.images || '';
+        document.getElementById('videosDefaultPrompt').value = defaults.videos || '';
+
+        populateOverview();
+        populateConcepts();
+        populateTranslations();
+        populateImages();
+        populateVideos();
+        populateMusic();
+
+        showToast('Univers chargé !', 'success');
       } catch (e) {
         console.error(e);
+        showToast('Erreur chargement univers', 'error');
+      }
+    }
+
+    function populateOverview() {
+      const concepts = universeData.objects || [];
+      const imagesReady = (universeData.images || []).filter(Boolean).length;
+      const videosReady = (universeData.videos || []).filter(Boolean).length;
+      const musicLangs = Object.keys(universeData.music_translations || {}).length;
+
+      document.getElementById('universeInfo').innerHTML = `
+        <div class="bg-blue-50 p-4 rounded-xl"><div class="text-2xl font-bold text-blue-600">${concepts.length}</div><div class="text-sm text-gray-600">Concepts</div></div>
+        <div class="bg-green-50 p-4 rounded-xl"><div class="text-2xl font-bold text-green-600">${imagesReady}/${concepts.length}</div><div class="text-sm text-gray-600">Images</div></div>
+        <div class="bg-purple-50 p-4 rounded-xl"><div class="text-2xl font-bold text-purple-600">${videosReady}/${concepts.length}</div><div class="text-sm text-gray-600">Videos</div></div>
+        <div class="bg-pink-50 p-4 rounded-xl"><div class="text-2xl font-bold text-pink-600">${musicLangs}/5</div><div class="text-sm text-gray-600">Music Languages</div></div>
+      `;
+    }
+
+    function populateConcepts() {
+      const concepts = universeData.objects || [];
+      document.getElementById('conceptCount').textContent = concepts.length;
+      document.getElementById('conceptsList').innerHTML = concepts.map((c, i) => `
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <span class="text-gray-400 font-mono text-sm w-8">${i + 1}.</span>
+          <input type="text" value="${c}" class="flex-1" onchange="updateConcept(${i}, this.value)">
+          <button onclick="deleteConcept(${i})" class="text-red-500 hover:text-red-700">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    function populateTranslations() {
+      const concepts = universeData.objects || [];
+      const translations = universeData.translations || {};
+      const langs = ['en', 'fr', 'es', 'it', 'de'];
+
+      const list = document.getElementById('translationsList');
+      list.innerHTML = concepts.map((concept, i) => `
+        <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+          <h4 class="text-lg font-bold text-gray-800 mb-3">${concept}</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            ${langs.map(lang => `
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">
+                  ${lang.toUpperCase()} ${getLangFlag(lang)}
+                </label>
+                <input type="text"
+                       value="${translations[lang]?.[i] || ''}"
+                       placeholder="Translation..."
+                       data-lang="${lang}"
+                       data-index="${i}"
+                       onchange="updateTranslation('${lang}', ${i}, this.value)">
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function populateImages() {
+      const concepts = universeData.objects || [];
+      const imagePrompts = universeData.images || [];
+
+      const grid = document.getElementById('imagesGrid');
+      grid.innerHTML = concepts.map((concept, i) => {
+        const prompt = imagePrompts[i] || '';
+        const imagePath = `storage/univers/${currentUniverse}/${universeData.items[i].image}`;
+
+        return `
+          <div class="asset-card" onclick="showAssetModal('image', ${i}, '${concept}', '${prompt}')">
+            <div class="relative">
+              <img src="${imagePath}"
+                   onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 300%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%239ca3af%22 font-size=%2220%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'"
+                   alt="${concept}">
+              <div class="asset-badge status-pending">Pending</div>
+            </div>
+            <div class="p-4">
+              <h4 class="font-bold text-gray-800 mb-2">${concept}</h4>
+              <p class="text-xs text-gray-600 line-clamp-2">${prompt || 'No prompt yet'}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function populateVideos() {
+      const concepts = universeData.objects || [];
+      const videoPrompts = universeData.videos || [];
+
+      const grid = document.getElementById('videosGrid');
+      grid.innerHTML = concepts.map((concept, i) => {
+        const prompt = videoPrompts[i] || '';
+        const videoPath = `storage/univers/${currentUniverse}/${universeData.items[i].video.replace('.mp4', '.webm')}`;
+
+        return `
+          <div class="asset-card" onclick="showAssetModal('video', ${i}, '${concept}', '${prompt}')">
+            <div class="relative">
+              <video src="${videoPath}"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                     class="w-full h-48 object-cover"></video>
+              <div class="w-full h-48 bg-gray-200 hidden items-center justify-center text-gray-400">
+                No Video
+              </div>
+              <div class="asset-badge status-pending">Pending</div>
+            </div>
+            <div class="p-4">
+              <h4 class="font-bold text-gray-800 mb-2">${concept}</h4>
+              <p class="text-xs text-gray-600 line-clamp-2">${prompt || 'No prompt yet'}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function populateMusic() {
+      const musicData = universeData.music_translations || {};
+
+      const frLyrics = musicData.fr?.lyrics || '';
+      const frPrompt = musicData.fr?.prompt || '';
+
+      document.getElementById('musicLyricsFr').value = frLyrics;
+      document.getElementById('musicPromptFr').value = frPrompt;
+
+      const langs = ['en', 'es', 'it', 'de'];
+      const container = document.getElementById('musicOtherLangs');
+
+      container.innerHTML = langs.map(lang => {
+        const data = musicData[lang] || { lyrics: '', prompt: '' };
+        return `
+          <div class="p-4 bg-gray-50 rounded-xl">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">${getLangFlag(lang)} ${lang.toUpperCase()}</h3>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Lyrics</label>
+            <textarea id="musicLyrics${lang}" placeholder="Translated lyrics..." onchange="updateMusicLyrics('${lang}', this.value)">${data.lyrics}</textarea>
+
+            <label class="block text-sm font-semibold text-gray-700 mb-2 mt-3">Prompt</label>
+            <input id="musicPrompt${lang}" type="text" value="${data.prompt}" placeholder="Music style..." onchange="updateMusicPrompt('${lang}', this.value)">
+
+            <div class="flex gap-2 mt-3">
+              <button onclick="generateMusic('${lang}')" class="btn btn-success">Generate</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      event.target.classList.add('active');
+    }
+
+    function showCreateModal() {
+      const modal = document.getElementById('createModal');
+      modal.innerHTML = `
+        <div class="modal-overlay" onclick="closeCreateModal(event)">
+          <div class="modal-content max-w-md" onclick="event.stopPropagation()">
+            <div class="p-6">
+              <h2 class="text-2xl font-bold text-gray-800 mb-4">Create New Universe</h2>
+
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Universe Name</label>
+              <input id="newUniverseName" type="text" placeholder="e.g., Cars, Animals, Space..." class="mb-4">
+
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Theme Description</label>
+              <textarea id="newUniverseTheme" placeholder="e.g., Red Ferrari car, Tesla Model S, yellow school bus..."></textarea>
+
+              <div class="flex gap-3 mt-6">
+                <button onclick="createUniverse()" class="btn btn-primary flex-1">Create</button>
+                <button onclick="closeCreateModal()" class="btn btn-secondary">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function closeCreateModal(event) {
+      if (!event || event.target.classList.contains('modal-overlay')) {
+        document.getElementById('createModal').classList.add('hidden');
       }
     }
 
     async function createUniverse() {
-      const name = document.getElementById("newUniverseName").value.trim();
-      const theme = document.getElementById("newUniverseTheme").value.trim();
-       if (!name) return alert("Name required");
-       const res = await fetch("/api/universes", {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({ name, theme })
-       });
-       if (res.ok) {
-         loadUniverses();
-         const folder = name.toLowerCase().replace(/ /g, '_');
-         document.getElementById("universeSelect").value = folder;
-         loadUniversePrompts(folder);
-       }
+      const name = document.getElementById('newUniverseName').value.trim();
+      const theme = document.getElementById('newUniverseTheme').value.trim();
+
+      if (!name) {
+        showToast('Please enter a universe name', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/universes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, theme })
+        });
+
+        if (res.ok) {
+          showToast('Universe created successfully!', 'success');
+          closeCreateModal();
+          loadUniversesList();
+          // Auto-select the new universe
+          document.getElementById('universeSelect').value = name.toLowerCase().replace(' ', '_');
+          loadUniverse(name.toLowerCase().replace(' ', '_'));
+        } else {
+          throw new Error('Failed to create universe');
+        }
+      } catch (e) {
+        showToast('Failed to create universe', 'error');
+        console.error(e);
+      }
     }
 
-     async function loadDefaults() {
-        try {
-          const res = await fetch("/api/default-prompts");
-          const defaults = await res.json();
-          document.getElementById("objectsDefaultPrompt").value = defaults.objects || "";
-          document.getElementById("imagesDefaultPrompt").value = defaults.images || "";
-          document.getElementById("videosDefaultPrompt").value = defaults.videos || "";
-          document.getElementById("musicDefaultPrompt").value = defaults.music || "";
-        } catch (e) {
-          console.error("Failed to load defaults", e);
+    async function saveDescription() {
+       if (!currentUniverse) return;
+
+       const description = document.getElementById('descriptionInput').value;
+
+       try {
+         const res = await fetch(`${API_BASE}/universes/${currentUniverse}/data`, {
+           method: 'PATCH',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ description })
+         });
+
+         if (res.ok) {
+           showToast('Description saved!', 'success');
+           universeData.description = description;
+         } else {
+           throw new Error('Failed to save description');
+         }
+       } catch (e) {
+         showToast('Failed to save description', 'error');
+         console.error(e);
+       }
+     }
+
+     async function renameMediaFiles() {
+       if (!currentUniverse) return;
+
+       if (!confirm('This will rename existing media files based on current concepts. Continue?')) return;
+
+       try {
+         const res = await fetch(`${API_BASE}/universes/${currentUniverse}/rename-media`, {
+           method: 'POST'
+         });
+
+         const data = await res.json();
+         if (res.ok) {
+           showToast(data.message, 'success');
+           // Reload universe data to reflect changes
+           loadUniverse(currentUniverse);
+         } else {
+           throw new Error(data.detail || 'Failed to rename media files');
+         }
+       } catch (e) {
+         showToast('Failed to rename media files', 'error');
+         console.error(e);
+       }
+     }
+
+    async function generateConcepts() {
+      if (!currentUniverse) return;
+
+      const prompt = document.getElementById('conceptsDefaultPrompt').value;
+
+      try {
+        const res = await fetch(`${API_BASE}/generate/${currentUniverse}/objects`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          universeData.objects = data.objects;
+          populateConcepts();
+          populateOverview();
+          showToast('Concepts generated!', 'success');
+        } else {
+          throw new Error(data.detail || 'Failed to generate concepts');
         }
-     }
+      } catch (e) {
+        showToast('Failed to generate concepts', 'error');
+        console.error(e);
+      }
+    }
 
-     async function loadUniversePrompts(folder) {
-         const res = await fetch(`/api/universes/${folder}/prompts`);
-         const p = await res.json();
-         const dataRes = await fetch(`/api/universes/${folder}/data`);
-         const d = await dataRes.json();
-         currentUniverse = folder;
-         document.getElementById("descriptionTextarea").value = p.description || "";
-         populateObjects(p.objects || p.words || []);
-         populateImages(p.words || [], p.images || []);
-         populateVideos(p.words || [], p.videos || []);
-         populateTranslations(p.words || [], d.translations || {});
-         populateMusic(d.music_translations || {});
-         loadDefaults(); // Load defaults after loading universe
-     }
+    async function autoTranslateAll() {
+      if (!currentUniverse) return;
 
-     async function savePrompts() {
-        if (!currentUniverse) return alert("Choose a universe");
-        const desc = document.getElementById("descriptionTextarea").value;
-        const objects = Array.from(document.querySelectorAll("#objectsContainer input")).map(i => i.value);
-        const images = Array.from(document.querySelectorAll("#imagesContainer textarea")).map(t => t.value);
-        const videos = Array.from(document.querySelectorAll("#videosContainer textarea")).map(t => t.value);
-        const words = objects; // Assume objects are words
-        const data = { theme: currentUniverse, description: desc, objects, words, images, videos };
-        await fetch(`/api/universes/${currentUniverse}/prompts`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
+      try {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/translations/generate`, {
+          method: 'POST'
         });
-        alert("Saved!");
-     }
 
-     async function saveDefaults() {
-        const objects = document.getElementById("objectsDefaultPrompt").value;
-        const images = document.getElementById("imagesDefaultPrompt").value;
-        const videos = document.getElementById("videosDefaultPrompt").value;
-        const music = document.getElementById("musicDefaultPrompt").value;
-        const data = { objects, images, videos, music };
-        await fetch("/api/default-prompts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
+        const data = await res.json();
+        if (res.ok) {
+          universeData.translations = data.translations;
+          populateTranslations();
+          showToast('Translations generated!', 'success');
+        } else {
+          throw new Error(data.detail || 'Failed to generate translations');
+        }
+      } catch (e) {
+        showToast('Failed to generate translations', 'error');
+        console.error(e);
+      }
+    }
+
+    async function generateImagePrompts() {
+      if (!currentUniverse) return;
+
+      const defaultPrompt = document.getElementById('imagesDefaultPrompt').value;
+
+      try {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/images/prompts/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ defaultPrompt })
         });
-        alert("Defaults saved!");
-     }
+
+        const data = await res.json();
+        if (res.ok) {
+          universeData.images = data.prompts;
+          populateImages();
+          showToast('Image prompts generated!', 'success');
+        } else {
+          throw new Error(data.detail || 'Failed to generate image prompts');
+        }
+      } catch (e) {
+        showToast('Failed to generate image prompts', 'error');
+        console.error(e);
+      }
+    }
+
+    async function generateVideoPrompts() {
+      if (!currentUniverse) return;
+
+      const defaultPrompt = document.getElementById('videosDefaultPrompt').value;
+
+      try {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/videos/prompts/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ defaultPrompt })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          universeData.videos = data.prompts;
+          populateVideos();
+          showToast('Video prompts generated!', 'success');
+        } else {
+          throw new Error(data.detail || 'Failed to generate video prompts');
+        }
+      } catch (e) {
+        showToast('Failed to generate video prompts', 'error');
+        console.error(e);
+      }
+    }
+
+    async function generateAllImages() {
+      if (!currentUniverse) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/generate/${currentUniverse}/images`, {
+          method: 'POST'
+        });
+
+        if (res.ok) {
+          showToast('Images generation started!', 'success');
+        } else {
+          throw new Error('Failed to start image generation');
+        }
+      } catch (e) {
+        showToast('Failed to generate images', 'error');
+        console.error(e);
+      }
+    }
+
+    async function generateAllVideos() {
+      if (!currentUniverse) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/generate/${currentUniverse}/videos`, {
+          method: 'POST'
+        });
+
+        if (res.ok) {
+          showToast('Videos generation started!', 'success');
+        } else {
+          throw new Error('Failed to start video generation');
+        }
+      } catch (e) {
+        showToast('Failed to generate videos', 'error');
+        console.error(e);
+      }
+    }
+
+    function showAssetModal(type, index, concept, currentPrompt) {
+      const modal = document.getElementById('assetModal');
+      const isImage = type === 'image';
+      const assetPath = `storage/univers/${currentUniverse}/${universeData.items[index][isImage ? 'image' : 'video'].replace('.mp4', '.webm')}`;
+
+      modal.innerHTML = `
+        <div class="modal-overlay" onclick="closeAssetModal(event)">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">${concept}</h2>
+                <button onclick="closeAssetModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+              </div>
+
+              <div class="mb-6">
+                ${isImage
+                  ? `<img src="${assetPath}" class="w-full rounded-xl" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 800 600%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22800%22 height=%22600%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%239ca3af%22 font-size=%2240%22 dy=%22.3em%22%3ENo Image Generated%3C/text%3E%3C/svg%3E'">`
+                  : `<video src="${assetPath}" controls class="w-full rounded-xl" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"></video>
+                     <div class="w-full h-96 bg-gray-200 hidden items-center justify-center text-gray-400 text-xl rounded-xl">No Video Generated</div>`
+                }
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Prompt</label>
+                <textarea id="modalPrompt" class="font-mono text-sm">${currentPrompt}</textarea>
+              </div>
+
+              <div class="flex gap-3 flex-wrap">
+                <button onclick="saveAssetPrompt('${type}', ${index})" class="btn btn-success">
+                  Save Prompt
+                </button>
+                <button onclick="regenerateAsset('${type}', ${index})" class="btn btn-primary">
+                  Regenerate ${isImage ? 'Image' : 'Video'}
+                </button>
+                <button onclick="closeAssetModal()" class="btn btn-secondary">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function closeAssetModal(event) {
+      if (!event || event.target.classList.contains('modal-overlay')) {
+        document.getElementById('assetModal').classList.add('hidden');
+      }
+    }
+
+    async function saveAssetPrompt(type, index) {
+      if (!currentUniverse) return;
+
+      const prompt = document.getElementById('modalPrompt').value;
+      const key = type === 'image' ? 'images' : 'videos';
+
+      // Update local data
+      universeData[key][index] = prompt;
+
+      try {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/prompts`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [key]: universeData[key] })
+        });
+
+        if (res.ok) {
+          showToast('Prompt saved!', 'success');
+          // Refresh the grid
+          if (type === 'image') {
+            populateImages();
+          } else {
+            populateVideos();
+          }
+        } else {
+          throw new Error('Failed to save prompt');
+        }
+      } catch (e) {
+        showToast('Failed to save prompt', 'error');
+        console.error(e);
+      }
+    }
+
+    async function regenerateAsset(type, index) {
+      if (!currentUniverse) return;
+
+      const endpoint = `${API_BASE}/universes/${currentUniverse}/${type === 'image' ? 'images' : 'videos'}/${index}/regenerate`;
+
+      try {
+        const res = await fetch(endpoint, { method: 'POST' });
+
+        if (res.ok) {
+          showToast(`${type === 'image' ? 'Image' : 'Video'} regeneration started!`, 'success');
+          closeAssetModal();
+        } else {
+          throw new Error(`Failed to regenerate ${type}`);
+        }
+      } catch (e) {
+        showToast(`Failed to regenerate ${type}`, 'error');
+        console.error(e);
+      }
+    }
+
+    function updateConcept(index, value) {
+      universeData.objects[index] = value;
+    }
+
+    function updateTranslation(lang, index, value) {
+      if (!universeData.translations[lang]) {
+        universeData.translations[lang] = [];
+      }
+      universeData.translations[lang][index] = value;
+    }
+
+    function updateMusicLyrics(lang, value) {
+      if (!universeData.music_translations[lang]) {
+        universeData.music_translations[lang] = { lyrics: '', prompt: '' };
+      }
+      universeData.music_translations[lang].lyrics = value;
+    }
+
+    function updateMusicPrompt(lang, value) {
+      if (!universeData.music_translations[lang]) {
+        universeData.music_translations[lang] = { lyrics: '', prompt: '' };
+      }
+      universeData.music_translations[lang].prompt = value;
+    }
+
+    function deleteConcept(index) {
+      universeData.objects.splice(index, 1);
+      // Also remove corresponding prompts
+      if (universeData.images && universeData.images.length > index) {
+        universeData.images.splice(index, 1);
+      }
+      if (universeData.videos && universeData.videos.length > index) {
+        universeData.videos.splice(index, 1);
+      }
+      populateConcepts();
+      populateImages();
+      populateVideos();
+      populateOverview();
+    }
+
+    function addConceptManually() {
+      const concept = prompt('Enter new concept:');
+      if (concept && concept.trim()) {
+        universeData.objects.push(concept.trim());
+        populateConcepts();
+        populateOverview();
+      }
+    }
+
+    async function saveConcepts() {
+      if (!currentUniverse) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/prompts`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ words: universeData.objects })
+        });
+
+        if (res.ok) {
+          showToast('Concepts saved!', 'success');
+        } else {
+          throw new Error('Failed to save concepts');
+        }
+      } catch (e) {
+        showToast('Failed to save concepts', 'error');
+        console.error(e);
+      }
+    }
 
     async function saveTranslations() {
-       if (!currentUniverse) return alert("Choose a universe");
-       const translationInputs = document.querySelectorAll("#translationsContainer input");
-       const words = Array.from(document.querySelectorAll("#objectsContainer input")).map(i => i.value);
-       const translations = { en: [], fr: [], es: [], it: [], de: [] };
-       let index = 0;
-       words.forEach(() => {
-         ["en", "fr", "es", "it", "de"].forEach(lang => {
-           translations[lang].push(translationInputs[index].value);
-           index++;
-         });
-       });
-        // Update data.json
-        const data = { translations };
-        await fetch(`/api/universes/${currentUniverse}/data`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
+      if (!currentUniverse) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/data`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ translations: universeData.translations })
         });
-        alert("Translations saved!");
-     }
 
-     async function saveMusic() {
-        if (!currentUniverse) return alert("Choose a universe");
-        const musicInputs = document.querySelectorAll("#musicContainer textarea, #musicContainer input");
-        const musicTranslations = {};
-        let index = 0;
-        ["fr", "en", "es", "it", "de"].forEach(lang => {
-          const lyrics = musicInputs[index].value;
-          index++;
-          const prompt = musicInputs[index].value;
-          index++;
-          musicTranslations[lang] = { lyrics, prompt };
-        });
-        const data = { music_translations: musicTranslations };
-        await fetch(`/api/universes/${currentUniverse}/data`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-        alert("Music saved!");
-     }
-
-     async function generateMusic(lang) {
-         if (!currentUniverse) return alert("Choose a universe");
-         await fetch(`/api/generate/${currentUniverse}/music/${lang}`, { method: "POST" });
-         alert(`Music for ${lang} started!`);
-      }
-
-     async function generateMusicPrompts() {
-         if (!currentUniverse) return alert("Choose a universe");
-         try {
-             const res = await fetch(`/api/generate/${currentUniverse}/music-prompts`, { method: "POST" });
-             if (res.ok) {
-                 alert("Prompts generated from default!");
-                 loadUniversePrompts(currentUniverse); // Refresh UI
-             } else {
-                 alert("Failed to generate prompts");
-             }
-         } catch (e) {
-             console.error(e);
-             alert("Error generating prompts");
-         }
-     }
-
-     function openLyricsModal() {
-         document.getElementById("lyricsModal").classList.remove("hidden");
-     }
-
-     function closeLyricsModal() {
-         document.getElementById("lyricsModal").classList.add("hidden");
-         document.getElementById("customLyricsInput").value = "";
-     }
-
-     async function generateLyricsFromCustom() {
-         if (!currentUniverse) return alert("Choose a universe");
-         const customLyrics = document.getElementById("customLyricsInput").value.trim();
-         if (!customLyrics) return alert("Please enter lyrics");
-
-         try {
-             const res = await fetch(`/api/generate/${currentUniverse}/lyrics`, {
-                 method: "POST",
-                 headers: { "Content-Type": "application/json" },
-                 body: JSON.stringify({ lyrics: customLyrics })
-             });
-             if (res.ok) {
-                 alert("Lyrics generated and translated!");
-                 closeLyricsModal();
-                 loadUniversePrompts(currentUniverse); // Refresh UI
-             } else {
-                 alert("Failed to generate lyrics");
-             }
-         } catch (e) {
-             console.error(e);
-             alert("Error generating lyrics");
-         }
-     }
-
-     async function generateAllMusic() {
-         if (!currentUniverse) return alert("Choose a universe");
-         try {
-             const res = await fetch(`/api/generate/${currentUniverse}/music-all`, { method: "POST" });
-             if (res.ok) {
-                 alert("Music generation started for all languages!");
-             } else {
-                 alert("Failed to start music generation");
-             }
-         } catch (e) {
-             console.error(e);
-             alert("Error starting music generation");
-         }
-     }
-
-     async function regenerateLyrics(lang) {
-         if (!currentUniverse) return alert("Choose a universe");
-         try {
-             const res = await fetch(`/api/generate/${currentUniverse}/lyrics/${lang}`, { method: "POST" });
-             if (res.ok) {
-                 alert(`Lyrics regenerated for ${lang}!`);
-                 loadUniversePrompts(currentUniverse); // Refresh UI
-             } else {
-                 alert(`Failed to regenerate lyrics for ${lang}`);
-             }
-         } catch (e) {
-             console.error(e);
-             alert(`Error regenerating lyrics for ${lang}`);
-         }
-     }
-
-     async function regeneratePrompts() {
-       if (!currentUniverse) return alert("Choose a universe");
-       await fetch(`/api/universes/${currentUniverse}/regenerate-prompts`, { method: "POST" });
-       alert("Prompts regenerated! Reload the page to see changes.");
-    }
-
-    async function deleteUniverse() {
-       if (!currentUniverse) return alert("Choose a universe");
-       if (!confirm("Are you sure you want to delete this universe? This action is irreversible and will delete all files.")) return;
-       await fetch(`/api/universes/${currentUniverse}`, { method: "DELETE" });
-       alert("Universe deleted!");
-       // Refresh universe list
-       loadThemes();
-        // Clear form
-        document.getElementById("universeSelect").value = "";
-        currentUniverse = null;
-        document.getElementById("descriptionTextarea").value = "";
-        populateObjects([]);
-        populateImages([], []);
-        populateVideos([], []);
-        populateTranslations([], {});
-    }
-
-
-
-    function updateObject(index, value) {
-       // Update object name
-    }
-
-    // === GENERATION ===
-    async function generateImages() { if(!currentUniverse) return alert("Choose a universe"); await fetch(`/api/generate/${currentUniverse}/images`, {method:"POST"}); alert("Images started"); }
-    async function generateVideos() { if(!currentUniverse) return alert("Choose a universe"); await fetch(`/api/generate/${currentUniverse}/videos`, {method:"POST"}); alert("Videos started"); }
-    async function generateMusic() { if(!currentUniverse) return alert("Choose a universe"); await fetch(`/api/generate/${currentUniverse}/music`, {method:"POST"}); alert("Music started"); }
-    async function generateAll() { if(!currentUniverse) return alert("Choose a universe"); await fetch(`/api/generate/${currentUniverse}/all`, {method:"POST"}); alert("Full generation started"); }
-
-    // === PARTIE GALLERY – 100% ORIGINALE ET PARFAITE (celle qui marchait chez toi) ===
-    async function loadThemes() {
-      const res = await fetch("/api/universes");
-      const themes = await res.json();
-      const container = document.getElementById("themeButtons");
-      themes.forEach(t => {
-        const btn = document.createElement("button");
-        btn.textContent = t.name;
-        btn.className = "text-2xl px-8 py-4 rounded-full bg-white/10 backdrop-blur-lg text-white border border-white/30 hover:bg-white/20 transition";
-        btn.onclick = () => loadUniverse(t.folder);
-        container.appendChild(btn);
-      });
-    }
-
-    async function loadUniverse(folder) {
-      document.getElementById("selector").style.display = "none";
-      document.getElementById("gallery").style.display = "block";
-
-      const data = await fetch(`storage/univers/${folder}/data.json`).then(r => r.json());
-      const gallery = document.getElementById("gallery");
-      gallery.innerHTML = "";
-      cards = [];
-
-      bgAudio.src = `storage/univers/${folder}/music.mp3`;
-      bgAudio.volume = 0.28;
-      bgAudio.muted = isMuted;
-      bgAudio.play().catch(() => {});
-
-      data.items.forEach((item, i) => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <img src="storage/univers/${folder}/${item.image}" loading="lazy">
-          <div class="title">${item.title}</div>
-        `;
-        gallery.appendChild(card);
-
-        const imgElement = card.querySelector('img');
-
-        card.onclick = () => {
-          if (imgElement && item.video && card.contains(imgElement)) {
-            const video = document.createElement('video');
-            video.src = `storage/univers/${folder}/${item.video}`;
-            video.muted = true;
-            video.playsInline = true;
-            video.autoplay = true;
-            video.loop = true;
-            video.style.width = '100%';
-            video.style.height = '100%';
-            video.style.objectFit = 'cover';
-            card.replaceChild(video, imgElement);
-
-            card.onclick = () => {
-              card.replaceChild(imgElement, video);
-              card.onclick = () => {
-                const video2 = document.createElement('video');
-                video2.src = video.src;
-                video2.muted = true;
-                video2.playsInline = true;
-                video2.autoplay = true;
-                video2.loop = true;
-                video2.style = video.style;
-                card.replaceChild(video2, imgElement);
-                card.onclick = () => card.replaceChild(imgElement, video2);
-              };
-            };
-          }
-        };
-
-        setTimeout(() => {
-          card.style.transform = `translate(-50%, -50%) translateX(${i * 110}vw) scale(0.9) rotate(${i * 20}deg)`;
-        }, i * 150);
-
-        cards.push(card);
-      });
-
-      showCard(0);
-
-      document.getElementById("left-zone").onclick = () => { current = Math.max(0, current - 1); showCard(current); };
-      document.getElementById("right-zone").onclick = () => { current = Math.min(cards.length - 1, current + 1); showCard(current); };
-
-      const indicators = document.getElementById("indicators");
-      indicators.innerHTML = "";
-      data.items.forEach((_, i) => {
-        const dot = document.createElement("div");
-        dot.className = "indicator";
-        dot.onclick = () => showCard(i);
-        indicators.appendChild(dot);
-      });
-
-      let startX = 0;
-      gallery.addEventListener("touchstart", e => startX = e.touches[0].clientX, {passive:true});
-      gallery.addEventListener("touchend", e => {
-        const dx = e.changedTouches[0].clientX - startX;
-        if (Math.abs(dx) > 60) {
-          current = dx > 0 ? Math.max(0, current - 1) : Math.min(cards.length - 1, current + 1);
-          showCard(current);
+        if (res.ok) {
+          showToast('Translations saved!', 'success');
+        } else {
+          throw new Error('Failed to save translations');
         }
-      });
-    }
-
-    function showCard(n) {
-      current = n;
-      cards.forEach((card, i) => {
-        const diff = i - n;
-        card.style.transform = `translate(-50%, -50%) translateX(${diff * 110}vw) scale(${diff === 0 ? 1 : 0.88}) rotate(${diff * 18}deg)`;
-        card.style.zIndex = diff === 0 ? 10 : 5 - Math.abs(diff);
-        card.style.opacity = Math.abs(diff) > 2 ? 0 : 1;
-      });
-      document.querySelectorAll(".indicator").forEach((dot, i) => dot.classList.toggle("active", i === n));
-    }
-
-    function toggleMute() {
-      isMuted = !isMuted;
-      bgAudio.muted = isMuted;
-      document.getElementById("mute-button").textContent = isMuted ? "🔇" : "🔊";
-    }
-
-    // === MENU SLIDE (exactement comme ton ancien code qui marchait) ===
-    document.getElementById("menu-button").onclick = () => {
-      const popup = document.getElementById("menu-popup");
-      popup.style.display = popup.style.display === "block" ? "none" : "block";
-    };
-
-    let isDragging = false;
-    let startX = 0;
-    let currentX = 0;
-    const handle = document.getElementById("slide-handle");
-    const bar = document.getElementById("slide-bar");
-
-    function startDrag(clientX) {
-      isDragging = true;
-      startX = clientX - handle.offsetLeft;
-    }
-
-    function moveDrag(clientX) {
-      if (!isDragging) return;
-      currentX = clientX - startX;
-      currentX = Math.max(0, Math.min(currentX, bar.offsetWidth - handle.offsetWidth));
-      handle.style.left = currentX + "px";
-    }
-
-    function endDrag() {
-      if (!isDragging) return;
-      isDragging = false;
-      if (currentX > bar.offsetWidth * 0.8) {
-        document.getElementById("gallery").style.display = "none";
-        document.getElementById("selector").style.display = "flex";
-        document.getElementById("menu-popup").style.display = "none";
-        document.getElementById("settings").style.display = "none";
-        bgAudio.pause();
+      } catch (e) {
+        showToast('Failed to save translations', 'error');
+        console.error(e);
       }
-      handle.style.left = "0px";
     }
 
-    handle.addEventListener("mousedown", e => startDrag(e.clientX));
-    document.addEventListener("mousemove", e => moveDrag(e.clientX));
-    document.addEventListener("mouseup", endDrag);
+    async function saveMusic() {
+      if (!currentUniverse) return;
 
-    handle.addEventListener("touchstart", e => {
-      if (e.target === handle || handle.contains(e.target)) {
-        startDrag(e.touches[0].clientX);
-        e.stopPropagation();
+      try {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/data`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ music_translations: universeData.music_translations })
+        });
+
+        if (res.ok) {
+          showToast('Music data saved!', 'success');
+        } else {
+          throw new Error('Failed to save music data');
+        }
+      } catch (e) {
+        showToast('Failed to save music data', 'error');
+        console.error(e);
       }
-    }, {passive: true});
+    }
 
-    document.addEventListener("touchmove", e => {
-      if (isDragging) {
-        moveDrag(e.touches[0].clientX);
-        e.preventDefault();
+    async function translateLyrics() {
+      if (!currentUniverse) return;
+
+      const frLyrics = document.getElementById('musicLyricsFr').value;
+
+      try {
+        const res = await fetch(`${API_BASE}/generate/lyrics`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lyrics: frLyrics })
+        });
+
+        if (res.ok) {
+          showToast('Lyrics translated!', 'success');
+          // Reload universe data to get updated translations
+          loadUniverse(currentUniverse);
+        } else {
+          throw new Error('Failed to translate lyrics');
+        }
+      } catch (e) {
+        showToast('Failed to translate lyrics', 'error');
+        console.error(e);
       }
-    }, {passive: false});
+    }
 
-    document.addEventListener("touchend", () => { if (isDragging) endDrag(); });
+    async function generateMusic(lang) {
+      if (!currentUniverse) return;
 
-    document.addEventListener('keydown', e => {
-      if (e.key === 'ArrowLeft') showCard(Math.max(0, current - 1));
-      if (e.key === 'ArrowRight') showCard(Math.min(cards.length - 1, current + 1));
-    });
+      try {
+        const res = await fetch(`${API_BASE}/generate/${currentUniverse}/music/${lang}`, {
+          method: 'POST'
+        });
 
-    // === SÉLECTION UNIVERSE DANS SETTINGS ===
-    document.getElementById("universeSelect").addEventListener("change", e => {
-      if (e.target.value) loadUniversePrompts(e.target.value);
-    });
+        if (res.ok) {
+          showToast(`Music generation started for ${lang.toUpperCase()}!`, 'success');
+        } else {
+          throw new Error(`Failed to generate music for ${lang}`);
+        }
+      } catch (e) {
+        showToast(`Failed to generate music for ${lang}`, 'error');
+        console.error(e);
+      }
+    }
 
-    // === LANCEMENT ===
-    loadThemes();
+    function getLangFlag(lang) {
+       const flags = {
+         'fr': '🇫🇷',
+         'en': '🇺🇸',
+         'es': '🇪🇸',
+         'it': '🇮🇹',
+         'de': '🇩🇪'
+       };
+       return flags[lang] || lang.toUpperCase();
+     }
+
+     // ====================== SLIDESHOW ======================
+     function enterSlideshow() {
+       if (!currentUniverse || !universeData) return;
+       document.getElementById('langSelect').value = currentLang;
+       document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+       document.getElementById('slideshowMode').classList.remove('hidden');
+       document.querySelector('body > div').classList.add('hidden'); // Hide main container
+       populateSlideshow();
+       startMusic();
+     }
+
+     function exitSlideshow() {
+       document.getElementById('slideshowMode').classList.add('hidden');
+       document.querySelector('body > div').classList.remove('hidden');
+       stopMusic();
+     }
+
+     function populateSlideshow() {
+       const grid = document.getElementById('imagesGridSlideshow');
+       const concepts = universeData.objects || [];
+       const translations = universeData.translations || {};
+       const items = universeData.items || [];
+
+       grid.innerHTML = concepts.map((concept, i) => {
+         const imagePath = `storage/univers/${currentUniverse}/${items[i]?.image || `image_${i}.png`}`;
+         const narration = translations[currentLang]?.[i] || concept;
+         return `
+           <div class="asset-card" onclick="playVideo(${i})">
+             <img src="${imagePath}" alt="${concept}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 150%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22200%22 height=%22150%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%239ca3af%22 font-size=%2212%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+             <div class="asset-title">${narration}</div>
+           </div>
+         `;
+       }).join('');
+     }
+
+     function playVideo(index) {
+       const items = universeData.items || [];
+       const videoPath = `storage/univers/${currentUniverse}/${items[index]?.video.replace('.mp4', '.webm') || `video_${index}.mp4`}`;
+       const videoPlayer = document.getElementById('videoPlayer');
+       videoPlayer.src = videoPath;
+       videoPlayer.load();
+       videoPlayer.play();
+       document.getElementById('videoModal').classList.remove('hidden');
+     }
+
+     function closeVideoModal() {
+       const videoPlayer = document.getElementById('videoPlayer');
+       videoPlayer.pause();
+       videoPlayer.src = '';
+       document.getElementById('videoModal').classList.add('hidden');
+     }
+
+     function changeLanguage(lang) {
+       currentLang = lang;
+       populateSlideshow();
+       startMusic(); // Restart music for new lang
+     }
+
+     function startMusic() {
+       const musicPath = `storage/univers/${currentUniverse}/music_${currentLang}.mp3`;
+       const audio = document.getElementById('bgMusic');
+       audio.src = musicPath;
+       audio.volume = isMuted ? 0 : 0.5;
+       audio.play().catch(() => {}); // Ignore autoplay block
+     }
+
+     function stopMusic() {
+       const audio = document.getElementById('bgMusic');
+       audio.pause();
+       audio.src = '';
+     }
+
+     function toggleMute() {
+       isMuted = !isMuted;
+       const audio = document.getElementById('bgMusic');
+       audio.volume = isMuted ? 0 : 0.5;
+       document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+     }
+
+     // ====================== DÉMARRAGE ======================
+     // LE PLUS IMPORTANT : on initialise UNIQUEMENT quand tout est prêt
+     window.addEventListener('load', () => {
+       console.log('Page entièrement chargée → lancement de init()');
+       init();
+     });
   </script>
-</body>
-</html>

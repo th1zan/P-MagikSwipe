@@ -99,6 +99,32 @@ def get_prompts(name: str):
     with open(prompts_path, 'r') as f:
         return json.load(f)
 
+@router.patch("/universes/{name}/prompts")
+def update_prompts(name: str, updates: dict):
+    theme = name.lower().replace(' ', '_')
+    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+
+    # Load existing prompts
+    if os.path.exists(prompts_path):
+        with open(prompts_path, 'r') as f:
+            current_prompts = json.load(f)
+    else:
+        current_prompts = {}
+
+    # Merge updates
+    for key, value in updates.items():
+        if isinstance(value, list) and key in current_prompts:
+            # For arrays like images/videos, replace the entire array
+            current_prompts[key] = value
+        else:
+            current_prompts[key] = value
+
+    # Save updated prompts
+    with open(prompts_path, 'w') as f:
+        json.dump(current_prompts, f, indent=2)
+
+    return {"message": "Prompts updated"}
+
 @router.post("/universes/{name}/prompts")
 def save_prompts(name: str, prompts: dict):
     theme = name.lower().replace(' ', '_')

@@ -129,10 +129,22 @@ def generate_theme_music(theme_key: str, theme_name_fr: str, music_prompt=None, 
             words = words_data["words"]
 
             # Générer lyrics en fr
-            lyrics_prompt = f"Génère des paroles de chanson joyeuses pour enfants en français sur le thème '{theme_name_fr}' utilisant ces mots: {', '.join(words[:6])}. Maximum 500 caractères. Structure simple: [Verse 1] ... [Chorus] ... [Verse 2] ..."
+            lyrics_prompt = f"Génère des paroles de chanson joyeuses pour enfants en français sur le thème '{theme_name_fr}' utilisant ces mots: {', '.join(words[:6])}. Maximum 500 caractères. Structure simple: [Verse 1] ... [Chorus] ... [Verse 2] ... Respond ONLY with a valid JSON object in this exact format: {{\"lyrics\": \"[Verse 1]\\n...\"}}. Do not include any other text, explanations, or formatting."
 
-            lyrics_output = replicate.run("meta/llama-2-70b-chat", input={"prompt": lyrics_prompt, "temperature": 0.8, "max_tokens": 500})
-            lyrics_fr = "".join(lyrics_output).strip()
+            lyrics_output = replicate.run("meta/llama-2-70b-chat", input={"prompt": lyrics_prompt, "temperature": 0.7, "max_tokens": 600})
+            text = "".join(lyrics_output).strip()
+
+            try:
+                # Try to extract JSON
+                json_match = re.search(r'\{.*\}', text.strip())
+                if json_match:
+                    response_json = json.loads(json_match.group())
+                else:
+                    response_json = json.loads(text.strip())
+                lyrics_fr = response_json.get("lyrics", "").strip()
+            except (json.JSONDecodeError, AttributeError) as e:
+                logging.error(f"Failed to parse lyrics JSON: {e}, falling back to text parsing")
+                lyrics_fr = text.strip()
 
             # Nettoyage
             start = lyrics_fr.find("[Verse")
