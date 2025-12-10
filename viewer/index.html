@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -176,6 +175,72 @@
       font-size: 14px;
     }
 
+    /* Presentation Mode */
+    .presentation-slide {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .presentation-slide img {
+      max-width: 90%;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .presentation-slide img:hover {
+      transform: scale(1.02);
+    }
+    .presentation-title {
+      margin-top: 30px;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.9);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+    .nav-arrow:hover {
+      background: white;
+      transform: translateY(-50%) scale(1.1);
+    }
+    .nav-arrow.left { left: 20px; }
+    .nav-arrow.right { right: 20px; }
+    .slide-counter {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.9);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+
     /* Input */
     input, textarea, select {
       width: 100%;
@@ -208,7 +273,7 @@
 <body>
 
   <!-- Main Container -->
-  <div class="max-w-7xl mx-auto p-6">
+  <div id="mainContainer" class="max-w-7xl mx-auto p-6">
     
     <!-- Header -->
     <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
@@ -220,6 +285,9 @@
          <div class="flex gap-3">
            <button onclick="showCreateModal()" class="btn btn-primary">
              ➕ New Universe
+           </button>
+           <button onclick="publishToSupabase()" class="btn btn-primary" id="publishBtn">
+             ☁️ Publish to DB
            </button>
            <button onclick="enterSlideshow()" class="btn btn-success">
              🎠 Slideshow
@@ -352,12 +420,13 @@
           <div class="mb-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
             <h3 class="text-lg font-bold text-purple-900 mb-3">🇫🇷 French (Master)</h3>
              <label class="block text-sm font-semibold text-gray-700 mb-2">Lyrics</label>
-             <textarea id="musicLyricsFr" placeholder="Dans le monde magique..." onchange="updateMusicLyrics('fr', this.value)"></textarea>
+             <textarea id="musicLyricsFr" placeholder="[Verse]\nDans le monde magique...\n[Chorus]\nChantons ensemble..." onchange="updateMusicLyrics('fr', this.value)"></textarea>
 
              <label class="block text-sm font-semibold text-gray-700 mb-2 mt-4">Music Style Prompt</label>
              <input id="musicPromptFr" type="text" placeholder="Joyful children's song, bouncy melody..." onchange="updateMusicPrompt('fr', this.value)">
             
             <div class="flex gap-2 mt-3 flex-wrap">
+              <button onclick="generateLyricsAI()" class="btn btn-primary">🎼 Generate Lyrics with AI</button>
               <button onclick="translateLyrics()" class="btn btn-primary">🌍 Translate to All</button>
               <button onclick="generateMusic('fr')" class="btn btn-success">🎵 Generate Music</button>
             </div>
@@ -382,6 +451,7 @@
        <div class="flex justify-between items-center p-4 bg-white/20 backdrop-blur-sm">
          <button onclick="exitSlideshow()" class="btn-slideshow">⬅️ Back</button>
          <div class="flex gap-2">
+           <button id="startPresentationBtn" onclick="startPresentation()" class="btn-slideshow">▶️ Start Presentation</button>
            <select id="langSelect" onchange="changeLanguage(this.value)" class="btn-slideshow">
              <option value="fr">🇫🇷 FR</option>
              <option value="en">🇺🇸 EN</option>
@@ -393,11 +463,21 @@
          </div>
        </div>
 
-       <!-- Images Grid -->
-       <div class="flex-1 p-4 overflow-auto">
+       <!-- Images Grid (Contact Sheet) -->
+       <div id="contactSheet" class="flex-1 p-4 overflow-auto">
          <div id="imagesGridSlideshow" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
            <!-- Images will be populated here -->
          </div>
+       </div>
+
+       <!-- Presentation Mode -->
+       <div id="presentationMode" class="hidden flex-1 relative">
+         <div id="presentationSlide" class="presentation-slide">
+           <!-- Current slide will be shown here -->
+         </div>
+         <div class="nav-arrow left" onclick="previousSlide()">‹</div>
+         <div class="nav-arrow right" onclick="nextSlide()">›</div>
+         <div class="slide-counter" id="slideCounter">1 / 1</div>
        </div>
 
        <!-- Background Music -->
@@ -406,10 +486,13 @@
    </div>
 
    <!-- VIDEO MODAL -->
-   <div id="videoModal" class="hidden fixed inset-0 bg-black/80 z-60 flex items-center justify-center">
-     <div class="relative max-w-4xl w-full mx-4">
-       <button onclick="closeVideoModal()" class="absolute -top-10 right-0 text-white text-2xl">✕</button>
+   <div id="videoModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center" style="z-index: 9999;" onclick="closeVideoModal()">
+     <div class="relative max-w-4xl w-full mx-4" onclick="event.stopPropagation()">
+       <button onclick="closeVideoModal()" class="absolute -top-10 right-0 text-white text-2xl hover:text-gray-300 cursor-pointer">✕</button>
        <video id="videoPlayer" controls class="w-full rounded-lg"></video>
+       <div class="text-center mt-4">
+         <button onclick="closeVideoModal()" class="btn-slideshow">⬅️ Back to Image</button>
+       </div>
      </div>
    </div>
 
@@ -430,6 +513,8 @@
     let currentLang = 'fr';
     let isMuted = false;
     const API_BASE = 'http://localhost:8000/api';
+    let presentationActive = false;
+    let currentSlideIndex = 0;
 
     // ====================== TOAST ======================
     function showToast(message, type = 'info') {
@@ -555,7 +640,12 @@
       const list = document.getElementById('translationsList');
       list.innerHTML = concepts.map((concept, i) => `
         <div class="mb-6 p-4 bg-gray-50 rounded-xl">
-          <h4 class="text-lg font-bold text-gray-800 mb-3">${concept}</h4>
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-lg font-bold text-gray-800">${concept}</h4>
+            <button onclick="translateSingleConcept(${i}, '${concept.replace(/'/g, "\\'")}')" class="btn btn-primary text-sm px-3 py-1">
+              🌍 Translate
+            </button>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             ${langs.map(lang => `
               <div>
@@ -824,6 +914,42 @@
         }
       } catch (e) {
         showToast('Failed to generate translations', 'error');
+        console.error(e);
+      }
+    }
+
+    async function translateSingleConcept(index, concept) {
+      if (!currentUniverse) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/translations/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            concept_index: index,
+            concept: concept 
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          // Update only the translations for this specific concept
+          const langs = ['en', 'fr', 'es', 'it', 'de'];
+          langs.forEach(lang => {
+            if (data.translations[lang] && data.translations[lang][index]) {
+              if (!universeData.translations[lang]) {
+                universeData.translations[lang] = [];
+              }
+              universeData.translations[lang][index] = data.translations[lang][index];
+            }
+          });
+          populateTranslations();
+          showToast(`Translation generated for "${concept}"!`, 'success');
+        } else {
+          throw new Error(data.detail || 'Failed to generate translation');
+        }
+      } catch (e) {
+        showToast('Failed to generate translation', 'error');
         console.error(e);
       }
     }
@@ -1134,10 +1260,47 @@
       }
     }
 
+    async function generateLyricsAI() {
+      if (!currentUniverse) return;
+
+      try {
+        showToast('Generating lyrics with AI...', 'info');
+        
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/lyrics/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            theme: currentUniverse,
+            words: universeData.objects || []
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          // Update French lyrics
+          const lyrics = data.lyrics || '';
+          document.getElementById('musicLyricsFr').value = lyrics;
+          updateMusicLyrics('fr', lyrics);
+          
+          showToast('Lyrics generated with AI!', 'success');
+        } else {
+          throw new Error(data.detail || 'Failed to generate lyrics');
+        }
+      } catch (e) {
+        showToast('Failed to generate lyrics', 'error');
+        console.error(e);
+      }
+    }
+
     async function translateLyrics() {
       if (!currentUniverse) return;
 
       const frLyrics = document.getElementById('musicLyricsFr').value;
+
+      if (!frLyrics.trim()) {
+        showToast('Please add French lyrics first', 'error');
+        return;
+      }
 
       try {
         const res = await fetch(`${API_BASE}/generate/lyrics`, {
@@ -1178,6 +1341,42 @@
       }
     }
 
+    async function publishToSupabase() {
+      if (!currentUniverse) {
+        showToast('Please select a universe first', 'error');
+        return;
+      }
+
+      if (!confirm(`Publish "${currentUniverse}" to Supabase database?\n\nThis will upload all files and update the database.`)) {
+        return;
+      }
+
+      const publishBtn = document.getElementById('publishBtn');
+      const originalText = publishBtn.innerHTML;
+      publishBtn.disabled = true;
+      publishBtn.innerHTML = '⏳ Publishing...';
+
+      try {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/publish`, {
+          method: 'POST'
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`✅ Published successfully! ${data.files_uploaded} files uploaded, ${data.assets_created} assets created.`, 'success');
+          console.log('Published to:', data.public_url);
+        } else {
+          throw new Error(data.detail || 'Failed to publish');
+        }
+      } catch (e) {
+        showToast('Failed to publish to database', 'error');
+        console.error(e);
+      } finally {
+        publishBtn.disabled = false;
+        publishBtn.innerHTML = originalText;
+      }
+    }
+
     function getLangFlag(lang) {
        const flags = {
          'fr': '🇫🇷',
@@ -1191,19 +1390,26 @@
 
      // ====================== SLIDESHOW ======================
      function enterSlideshow() {
-       if (!currentUniverse || !universeData) return;
+       if (!currentUniverse || !universeData) {
+         showToast('Please select a universe first', 'error');
+         return;
+       }
        document.getElementById('langSelect').value = currentLang;
        document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
        document.getElementById('slideshowMode').classList.remove('hidden');
-       document.querySelector('body > div').classList.add('hidden'); // Hide main container
+       document.getElementById('mainContainer').classList.add('hidden'); // Hide main container
        populateSlideshow();
        startMusic();
      }
 
      function exitSlideshow() {
+       if (presentationActive) {
+         stopPresentation();
+       }
        document.getElementById('slideshowMode').classList.add('hidden');
-       document.querySelector('body > div').classList.remove('hidden');
+       document.getElementById('mainContainer').classList.remove('hidden');
        stopMusic();
+       document.removeEventListener('keydown', handleKeyNavigation);
      }
 
      function populateSlideshow() {
@@ -1216,7 +1422,7 @@
          const imagePath = `storage/univers/${currentUniverse}/${items[i]?.image || `image_${i}.png`}`;
          const narration = translations[currentLang]?.[i] || concept;
          return `
-           <div class="asset-card" onclick="playVideo(${i})">
+           <div class="asset-card" onclick="goToSlide(${i})">
              <img src="${imagePath}" alt="${concept}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 150%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22200%22 height=%22150%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%239ca3af%22 font-size=%2212%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
              <div class="asset-title">${narration}</div>
            </div>
@@ -1225,13 +1431,24 @@
      }
 
      function playVideo(index) {
+       console.log('playVideo called for index:', index);
        const items = universeData.items || [];
        const videoPath = `storage/univers/${currentUniverse}/${items[index]?.video.replace('.mp4', '.webm') || `video_${index}.mp4`}`;
+       console.log('Video path:', videoPath);
        const videoPlayer = document.getElementById('videoPlayer');
        videoPlayer.src = videoPath;
        videoPlayer.load();
-       videoPlayer.play();
        document.getElementById('videoModal').classList.remove('hidden');
+       // Delay play to ensure modal is rendered and handle autoplay policies
+       setTimeout(() => {
+         videoPlayer.play().then(() => {
+           console.log('Video playing successfully');
+         }).catch(e => {
+           console.error('Video play failed:', e);
+           // Fallback: show play button or message
+           showToast('Click to play video', 'info');
+         });
+       }, 100);
      }
 
      function closeVideoModal() {
@@ -1266,6 +1483,96 @@
        const audio = document.getElementById('bgMusic');
        audio.volume = isMuted ? 0 : 0.5;
        document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+     }
+
+     // ====================== PRESENTATION MODE ======================
+     function startPresentation() {
+       presentationActive = true;
+       currentSlideIndex = 0;
+       document.getElementById('contactSheet').classList.add('hidden');
+       document.getElementById('presentationMode').classList.remove('hidden');
+       document.getElementById('startPresentationBtn').textContent = '◼️ Stop';
+       document.getElementById('startPresentationBtn').onclick = stopPresentation;
+       showSlide(currentSlideIndex);
+       // Add keyboard navigation
+       document.addEventListener('keydown', handleKeyNavigation);
+     }
+
+     function stopPresentation() {
+       presentationActive = false;
+       document.getElementById('contactSheet').classList.remove('hidden');
+       document.getElementById('presentationMode').classList.add('hidden');
+       document.getElementById('startPresentationBtn').textContent = '▶️ Start Presentation';
+       document.getElementById('startPresentationBtn').onclick = startPresentation;
+       document.removeEventListener('keydown', handleKeyNavigation);
+     }
+
+     function showSlide(index) {
+       const concepts = universeData.objects || [];
+       const translations = universeData.translations || {};
+       const items = universeData.items || [];
+
+       if (index < 0) index = concepts.length - 1;
+       if (index >= concepts.length) index = 0;
+
+       currentSlideIndex = index;
+
+       const concept = concepts[index];
+       const imagePath = `storage/univers/${currentUniverse}/${items[index]?.image || `image_${index}.png`}`;
+       const narration = translations[currentLang]?.[index] || concept;
+
+       const slideContainer = document.getElementById('presentationSlide');
+       slideContainer.innerHTML = `
+         <img src="${imagePath}" 
+              alt="${concept}" 
+              onclick="playVideoFromSlide(${index})"
+              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 800 600%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22800%22 height=%22600%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%239ca3af%22 font-size=%2240%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+         <div class="presentation-title">${narration}</div>
+       `;
+
+       document.getElementById('slideCounter').textContent = `${index + 1} / ${concepts.length}`;
+     }
+
+     function nextSlide() {
+       if (!presentationActive) return;
+       showSlide(currentSlideIndex + 1);
+     }
+
+     function previousSlide() {
+       if (!presentationActive) return;
+       showSlide(currentSlideIndex - 1);
+     }
+
+     function goToSlide(index) {
+       if (!presentationActive) {
+         startPresentation();
+       }
+       showSlide(index);
+     }
+
+     function handleKeyNavigation(e) {
+       if (!presentationActive) return;
+       if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+         e.preventDefault();
+         nextSlide();
+       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+         e.preventDefault();
+         previousSlide();
+       } else if (e.key === 'Escape') {
+         stopPresentation();
+       }
+     }
+
+     function playVideoFromSlide(index) {
+       playVideo(index);
+       // Store current slide index for return
+       const videoPlayer = document.getElementById('videoPlayer');
+       videoPlayer.dataset.slideIndex = index;
+       // Optional: Auto-advance to next slide when video ends
+       videoPlayer.onended = () => {
+         // Just close and return to current slide, don't auto-advance
+         closeVideoModal();
+       };
      }
 
      // ====================== DÉMARRAGE ======================

@@ -215,3 +215,120 @@ def delete_universe(name: str):
             json.dump(themes, f, indent=2)
     
     return {"message": f"Univers '{name}' supprimé"}
+
+@router.post("/universes/{name}/publish")
+def publish_universe(name: str):
+    """Upload/publish universe to Supabase storage and database"""
+    if not supabase_client:
+        raise HTTPException(status_code=500, detail="Supabase not configured")
+    
+    folder = name.lower().replace(' ', '_')
+    local_path = os.path.join(STORAGE_PATH, "univers", folder)
+    
+    if not os.path.exists(local_path):
+        raise HTTPException(status_code=404, detail="Universe not found")
+    
+    try:
+        # Upload all files to Supabase Storage
+        bucket_name = "univers"
+        uploaded_files = []
+        
+        for root, dirs, files in os.walk(local_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                relative_path = os.path.relpath(file_path, local_path)
+                remote_path = f"{folder}/{relative_path}".replace("\\", "/")
+                
+                with open(file_path, "rb") as f:
+                    file_content = f.read()
+                    try:
+                        # Try to upload, if exists, remove and re-upload
+                        supabase_client.storage.from_(bucket_name).upload(
+                            remote_path, file_content, {"content-type": "auto"}
+                        )
+                    except Exception as upload_error:
+                        # If file exists, remove it first then upload
+                        try:
+                            supabase_client.storage.from_(bucket_name).remove([remote_path])
+                        except:
+                            pass
+                        supabase_client.storage.from_(bucket_name).upload(
+                            remote_path, file_content, {"content-type": "auto"}
+                        )
+                uploaded_files.append(remote_path)
+        
+        # Load universe data
+        data_path = os.path.join(local_path, "data.json")
+        with open(data_path, 'r') as f:
+            universe_data = json.load(f)
+        
+        # Find thumbnail
+        files = os.listdir(local_path)
+        thumbnail = next((f for f in files if f.startswith("00_") and f.endswith(".png")), None)
+        if not thumbnail:
+            thumbnail = files[0] if files else "placeholder.png"
+        
+        thumbnail_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{folder}/{thumbnail}"
+        background_color = universe_data.get('background_color', '#ffffff')
+        
+        # Insert or update universe in database
+        universe_db_data = {
+            "name": name,
+            "folder": folder,
+            "is_public": True,
+            "thumbnail_url": thumbnail_url,
+            "background_color": background_color,
+            "background_music": "music.mp3"
+        }
+        
+        # Check if universe already exists
+        existing = supabase_client.table("univers").select("id").eq("folder", folder).execute()
+        
+        if existing.data:
+            # Update existing
+            supabase_client.table("univers").update(universe_db_data).eq("folder", folder).execute()
+        else:
+            # Insert new
+            supabase_client.table("univers").insert(universe_db_data).execute()
+        
+        # Delete existing assets for this universe
+        supabase_client.table("univers_assets").delete().eq("univers_folder", folder).execute()
+        
+        # Insert assets
+        items = universe_data.get("items", [])
+        if items:
+            asset_inserts = []
+            for i, item in enumerate(items):
+                asset_inserts.append({
+                    "univers_folder": folder,
+                    "sort_order": i,
+                    "image_name": item["image"],
+                    "display_name": item["title"]
+                })
+            asset_response = supabase_client.table("univers_assets").insert(asset_inserts).execute()
+            
+            # Insert translations
+            translation_inserts = []
+            for i, item in enumerate(items):
+                asset_id = asset_response.data[i]["id"]
+                title_translations = item.get("title_translations", {})
+                for lang in ["fr", "en", "es", "it", "de"]:
+                    display_name = title_translations.get(lang, item["title"])
+                    translation_inserts.append({
+                        "asset_id": asset_id,
+                        "language": lang,
+                        "display_name": display_name
+                    })
+            
+            if translation_inserts:
+                supabase_client.table("univers_assets_translations").insert(translation_inserts).execute()
+        
+        return {
+            "message": f"Universe '{name}' published successfully",
+            "files_uploaded": len(uploaded_files),
+            "assets_created": len(items),
+            "public_url": f"{SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{folder}/"
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to publish universe: {str(e)}")

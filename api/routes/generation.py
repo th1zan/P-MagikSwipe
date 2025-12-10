@@ -209,6 +209,43 @@ def regenerate_lyrics_lang(universe: str, lang: str):
 
     return {"message": f"Lyrics regenerated for {lang}"}
 
+@router.post("/universes/{universe}/lyrics/generate")
+def generate_lyrics_ai(universe: str, lyrics_data: dict):
+    """Generate lyrics using AI based on theme and words"""
+    theme = universe.lower().replace(' ', '_')
+    theme_name = lyrics_data.get("theme", universe)
+    words = lyrics_data.get("words", [])
+    
+    data_path = os.path.join(STORAGE_PATH, "univers", theme, "data.json")
+    if not os.path.exists(data_path):
+        raise HTTPException(status_code=404, detail="Universe not found")
+    
+    # Import the lyrics generation function
+    from api.prompts import generate_lyrics as generate_lyrics_fn
+    
+    try:
+        # Generate French lyrics
+        lyrics = generate_lyrics_fn(theme_name, words)
+        
+        # Load and update data
+        with open(data_path, 'r') as f:
+            data = json.load(f)
+        
+        music_translations = data.get("music_translations", {})
+        if "fr" not in music_translations:
+            music_translations["fr"] = {"lyrics": "", "prompt": ""}
+        
+        music_translations["fr"]["lyrics"] = lyrics
+        data["music_translations"] = music_translations
+        
+        # Save updated data
+        with open(data_path, 'w') as f:
+            json.dump(data, f, indent=2)
+        
+        return {"lyrics": lyrics, "message": "Lyrics generated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate lyrics: {str(e)}")
+
 @router.post("/generate/{universe}/music-all")
 def generate_all_music(universe: str):
     theme = universe.lower().replace(' ', '_')
