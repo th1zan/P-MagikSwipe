@@ -1,9 +1,9 @@
 {
   "items": [
     {
-      "image": "00_monkey.png",
       "title": "monkey",
-      "video": "00_monkey_silent.mp4",
+      "image": "00_monkey.png",
+      "video": "00_monkey.mp4",
       "title_translations": {
         "fr": "Jungle",
         "en": "Jungle",
@@ -13,9 +13,9 @@
       }
     },
     {
-      "image": "01_tree.png",
       "title": "tree",
-      "video": "01_tree_silent.mp4",
+      "image": "01_tree.png",
+      "video": "01_tree.mp4",
       "title_translations": {
         "fr": "Aventure",
         "en": "Adventure",
@@ -25,9 +25,9 @@
       }
     },
     {
-      "image": "02_bird.png",
       "title": "bird",
-      "video": "02_bird_silent.mp4",
+      "image": "02_bird.png",
+      "video": "02_bird.mp4",
       "title_translations": {
         "fr": "Singe",
         "en": "Monkey",
@@ -37,9 +37,9 @@
       }
     },
     {
-      "image": "03_flower.png",
       "title": "flower",
-      "video": "03_flower_silent.mp4",
+      "image": "03_flower.png",
+      "video": "03_flower.mp4",
       "title_translations": {
         "fr": "Safari",
         "en": "Safari",
@@ -49,21 +49,21 @@
       }
     },
     {
-      "image": "04_snake.png",
       "title": "snake",
-      "video": "04_snake_silent.mp4",
+      "image": "04_snake.png",
+      "video": "04_snake.mp4",
       "title_translations": {
         "fr": "Lion",
         "en": "Lion",
-        "es": "Le\u00f3n",
+        "es": "León",
         "it": "Leone",
-        "de": "L\u00f6we"
+        "de": "Löwe"
       }
     },
     {
-      "image": "05_lion.png",
       "title": "lion",
-      "video": "05_lion_silent.mp4",
+      "image": "05_lion.png",
+      "video": "05_lion.mp4",
       "title_translations": {
         "fr": "Tigre",
         "en": "Tiger",
@@ -73,21 +73,21 @@
       }
     },
     {
-      "image": "06_zebra.png",
       "title": "zebra",
-      "video": "06_zebra_silent.mp4",
+      "image": "06_zebra.png",
+      "video": "06_zebra.mp4",
       "title_translations": {
         "fr": "Oiseau",
         "en": "Bird",
-        "es": "P\u00e1jaro",
+        "es": "Pájaro",
         "it": "Uccello",
         "de": "Vogel"
       }
     },
     {
-      "image": "07_giraffe.png",
       "title": "giraffe",
-      "video": "07_giraffe_silent.mp4",
+      "image": "07_giraffe.png",
+      "video": "07_giraffe.mp4",
       "title_translations": {
         "fr": "Fleur",
         "en": "Flower",
@@ -97,23 +97,23 @@
       }
     },
     {
-      "image": "08_elephant.png",
       "title": "elephant",
-      "video": "08_elephant_silent.mp4",
+      "image": "08_elephant.png",
+      "video": "08_elephant.mp4",
       "title_translations": {
         "fr": "Arbre",
         "en": "Tree",
-        "es": "\u00c1rbol",
+        "es": "Árbol",
         "it": "Albero",
         "de": "Baum"
       }
     },
     {
-      "image": "09_butterfly.png",
       "title": "butterfly",
-      "video": "09_butterfly_silent.mp4",
+      "image": "09_butterfly.png",
+      "video": "09_butterfly.mp4",
       "title_translations": {
-        "fr": "For\u00eat",
+        "fr": "Forêt",
         "en": "Forest",
         "es": "Bosque",
         "it": "Foresta",
@@ -121,97 +121,69 @@
       }
     }
   ],
-  "thumbnail": "00_monkey.png",
-  "theme": "jungle",
   "translations": {
+    "fr": [
+      "Jungle",
+      "Aventure",
+      "Singe",
+      "Safari",
+      "Lion",
+      "Tigre",
+      "Oiseau",
+      "Fleur",
+      "Arbre",
+      "Forêt"
+    ],
     "en": [
-      "monkey",
-      "bird",
-      "flower",
-      "snake",
-      "lion",
-      "zebra",
-      "giraffe",
-      "elephant",
-      "butterfly",
-      "monkey"
+      "Jungle",
+      "Adventure",
+      "Monkey",
+      "Safari",
+      "Lion",
+      "Tiger",
+      "Bird",
+      "Flower",
+      "Tree",
+      "Forest"
     ],
     "es": [
-      "mono",
-      "p\u00e1jaro",
-      "flor",
-      "serpiente",
-      "le\u00f3n",
-      "cebra",
-      "jirafa",
-      "elefante",
-      "mariposa",
-      "mono"
+      "Selva",
+      "Aventura",
+      "Mono",
+      "Safari",
+      "León",
+      "Tigre",
+      "Pájaro",
+      "Flor",
+      "Árbol",
+      "Bosque"
     ],
     "it": [
-      "scimmia",
-      "uccello",
-      "fiore",
-      "serpente",
-      "leone",
-      "zebra",
-      "giraffa",
-      "elefante",
-      "farfalla",
-      "scimmia"
+      "Giungla",
+      "Avventura",
+      "Scimmia",
+      "Safari",
+      "Leone",
+      "Tigre",
+      "Uccello",
+      "Fiore",
+      "Albero",
+      "Foresta"
     ],
     "de": [
+      "Dschungel",
+      "Abenteuer",
       "Affe",
+      "Safari",
+      "Löwe",
+      "Tiger",
       "Vogel",
       "Blume",
-      "Schlange",
-      "L\u00f6we",
-      "Zebra",
-      "Giraffe",
-      "Elefant",
-      "Schmetterling",
-      "Affe"
-    ],
-    "fr": [
-      "monkey",
-      "bird",
-      "flower",
-      "snake",
-      "lion",
-      "zebra",
-      "giraffe",
-      "elephant",
-      "butterfly",
-      "singe"
+      "Baum",
+      "Wald"
     ]
   },
-  "theme_translations": {
-    "fr": "jungle",
-    "es": "jungle",
-    "it": "jungle",
-    "de": "jungle",
-    "en": "jungle"
-  },
-  "music_translations": {
-    "fr": {
-      "lyrics": "Dans la jungle, il y a des animaux\nQui dansent et chantent toute la journ\u00e9e\nLes singes font des acrobaties\nLes oiseaux volent en harmonie",
-      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
-    },
-    "en": {
-      "lyrics": "In the jungle there are animals\nWho dance and sing all day\nMonkeys do acrobatics\nBirds fly in harmony",
-      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
-    },
-    "es": {
-      "lyrics": "En la selva hay animales.\nQue bailan y cantan todo el d\u00eda.\nLos monos hacen acrobacias.\nLos p\u00e1jaros vuelan en armon\u00eda",
-      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
-    },
-    "it": {
-      "lyrics": "Nella giungla ci sono animali\nChe ballano e cantano tutto il giorno\nLe scimmie fanno acrobazie\nGli uccelli volano in armonia",
-      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
-    },
-    "de": {
-      "lyrics": "Im Dschungel gibt es Tiere\nDie den ganzen Tag tanzen und singen\nAffen machen Akrobatik\nV\u00f6gel fliegen in Harmonie",
-      "prompt": "Joyful children's song about jungle, with bouncy melody and fun lyrics."
-    }
-  }
+  "background_color": "#ffffff",
+  "description": "Jungle",
+  "music_translations": {}
 }

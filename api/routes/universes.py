@@ -332,3 +332,161 @@ def publish_universe(name: str):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to publish universe: {str(e)}")
+
+
+@router.post("/universes/{name}/sync-from-db")
+def sync_universe_from_db(name: str):
+    """Download/sync universe from Supabase storage and database to local storage"""
+    if not supabase_client:
+        raise HTTPException(status_code=500, detail="Supabase not configured")
+    
+    folder = name.lower().replace(' ', '_')
+    local_path = os.path.join(STORAGE_PATH, "univers", folder)
+    
+    try:
+        # Get universe from database - try with folder field first, then with name
+        try:
+            universe_response = supabase_client.table("univers").select("*").eq("folder", folder).execute()
+        except:
+            # If folder column doesn't exist, try matching by name
+            universe_response = supabase_client.table("univers").select("*").ilike("name", f"%{name}%").execute()
+        
+        if not universe_response.data:
+            raise HTTPException(status_code=404, detail=f"Universe '{name}' not found in database")
+        
+        universe_db = universe_response.data[0]
+        univers_id = universe_db.get("id")
+        
+        # Get assets and translations - try univers_folder first, then univers_id
+        try:
+            assets_response = supabase_client.table("univers_assets").select(
+                "*, univers_assets_translations(*)"
+            ).eq("univers_folder", folder).order("sort_order").execute()
+        except:
+            # If univers_folder doesn't exist, use univers_id
+            assets_response = supabase_client.table("univers_assets").select(
+                "*, univers_assets_translations(*)"
+            ).eq("univers_id", univers_id).order("sort_order").execute()
+        
+        # Clean up local directory - remove all existing files to avoid conflicts with renamed files
+        files_removed = 0
+        if os.path.exists(local_path):
+            print(f"Cleaning up existing files in {local_path}")
+            for root, dirs, files in os.walk(local_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    try:
+                        os.remove(file_path)
+                        files_removed += 1
+                        print(f"Removed old file: {file}")
+                    except Exception as e:
+                        print(f"Could not remove {file}: {e}")
+        
+        # Create local directory
+        os.makedirs(local_path, exist_ok=True)
+        
+        # Download all files from Supabase Storage
+        bucket_name = "univers"
+        downloaded_files = []
+        
+        try:
+            # List all files in the universe folder
+            files_response = supabase_client.storage.from_(bucket_name).list(folder)
+            
+            for file_obj in files_response:
+                file_name = file_obj['name']
+                remote_path = f"{folder}/{file_name}"
+                local_file_path = os.path.join(local_path, file_name)
+                
+                # Download file
+                file_data = supabase_client.storage.from_(bucket_name).download(remote_path)
+                
+                with open(local_file_path, 'wb') as f:
+                    f.write(file_data)
+                
+                downloaded_files.append(file_name)
+        except Exception as storage_error:
+            print(f"Storage download error: {storage_error}")
+            # Continue even if some files fail
+        
+        # Build data.json from database
+        items = []
+        translations = {"fr": [], "en": [], "es": [], "it": [], "de": []}
+        
+        for asset in assets_response.data:
+            # Build item
+            item = {
+                "title": asset["display_name"],
+                "image": asset["image_name"],
+                "video": asset["image_name"].replace(".png", ".mp4"),
+                "title_translations": {}
+            }
+            
+            # Get translations
+            for trans in asset.get("univers_assets_translations", []):
+                lang = trans["language"]
+                display_name = trans["display_name"]
+                item["title_translations"][lang] = display_name
+                translations[lang].append(display_name)
+            
+            # Fallback if no translations
+            for lang in translations.keys():
+                if lang not in item["title_translations"]:
+                    item["title_translations"][lang] = asset["display_name"]
+                    translations[lang].append(asset["display_name"])
+            
+            items.append(item)
+        
+        # Create data.json
+        data = {
+            "items": items,
+            "translations": translations,
+            "background_color": universe_db.get("background_color", "#ffffff"),
+            "description": universe_db.get("name", name),
+            "music_translations": {}  # Could be enhanced later
+        }
+        
+        data_path = os.path.join(local_path, "data.json")
+        with open(data_path, 'w') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        # Create/update prompts.json (basic structure)
+        words = [item["title"] for item in items]
+        prompts = {
+            "words": words,
+            "images": [""] * len(words),
+            "videos": [""] * len(words)
+        }
+        
+        prompts_path = os.path.join(local_path, "prompts.json")
+        with open(prompts_path, 'w') as f:
+            json.dump(prompts, f, indent=2, ensure_ascii=False)
+        
+        # Update index.json
+        index_path = os.path.join(STORAGE_PATH, "index.json")
+        index_data = []
+        if os.path.exists(index_path):
+            with open(index_path, 'r') as f:
+                index_data = json.load(f)
+        
+        # Add universe to index if not exists
+        if not any(u.get("folder") == folder for u in index_data):
+            index_data.append({
+                "name": universe_db["name"],
+                "folder": folder
+            })
+            with open(index_path, 'w') as f:
+                json.dump(index_data, f, indent=2, ensure_ascii=False)
+        
+        return {
+            "message": f"Universe '{name}' synced successfully from database",
+            "files_removed": files_removed,
+            "files_downloaded": len(downloaded_files),
+            "assets_synced": len(items),
+            "local_path": local_path
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to sync universe: {str(e)}")
