@@ -1,0 +1,102 @@
+[
+  {
+    "id": "00",
+    "display_name": "truck",
+    "sort_order": 0,
+    "image_prompt": "A beautiful, colorful illustration of truck in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of truck moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531163",
+    "image_file": "00_truck.png",
+    "video_file": "00_truck_silent.mp4"
+  },
+  {
+    "id": "01",
+    "display_name": "crane",
+    "sort_order": 1,
+    "image_prompt": "A beautiful, colorful illustration of crane in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of crane moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531176",
+    "image_file": "01_crane.png",
+    "video_file": "01_crane_silent.mp4"
+  },
+  {
+    "id": "02",
+    "display_name": "digger",
+    "sort_order": 2,
+    "image_prompt": "A beautiful, colorful illustration of digger in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of digger moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531178",
+    "image_file": "02_digger.png",
+    "video_file": "02_digger_silent.mp4"
+  },
+  {
+    "id": "03",
+    "display_name": "mixer",
+    "sort_order": 3,
+    "image_prompt": "A beautiful, colorful illustration of mixer in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of mixer moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531191",
+    "image_file": "03_mixer.png",
+    "video_file": "03_mixer_silent.mp4"
+  },
+  {
+    "id": "04",
+    "display_name": "roller",
+    "sort_order": 4,
+    "image_prompt": "A beautiful, colorful illustration of roller in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of roller moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531193",
+    "image_file": "04_roller.png",
+    "video_file": "04_roller_silent.mp4"
+  },
+  {
+    "id": "05",
+    "display_name": "bulldozer",
+    "sort_order": 5,
+    "image_prompt": "A beautiful, colorful illustration of dozer in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of dozer moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531194",
+    "image_file": "05_bulldozer.png",
+    "video_file": "05_bulldozer_silent.mp4"
+  },
+  {
+    "id": "06",
+    "display_name": "backhoe",
+    "sort_order": 6,
+    "image_prompt": "A beautiful, colorful illustration of backhoe in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of backhoe moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531196",
+    "image_file": "06_backhoe.png",
+    "video_file": "06_backhoe_silent.mp4"
+  },
+  {
+    "id": "07",
+    "display_name": "excavator",
+    "sort_order": 7,
+    "image_prompt": "A beautiful, colorful illustration of forklift in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of forklift moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531204",
+    "image_file": "07_excavator.png",
+    "video_file": "07_excavator_silent.mp4"
+  },
+  {
+    "id": "08",
+    "display_name": "forklift",
+    "sort_order": 8,
+    "image_prompt": "A beautiful, colorful illustration of cement in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of cement moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531206",
+    "image_file": "08_forklift.png",
+    "video_file": "08_forklift_silent.mp4"
+  },
+  {
+    "id": "09",
+    "display_name": "cement_mixer",
+    "sort_order": 9,
+    "image_prompt": "A beautiful, colorful illustration of dump in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video_prompt": "A short animated video of dump moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly.",
+    "generated_at": "2025-12-11T14:42:08.531207",
+    "image_file": "09_cement_mixer.png",
+    "video_file": "09_cement_mixer_silent.mp4"
+  }
+]

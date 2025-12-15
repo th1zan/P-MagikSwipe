@@ -1,38 +1,17 @@
 {
-  "words": [
-    "monkey",
-    "tree",
-    "bird",
-    "flower",
-    "snake",
-    "lion",
-    "zebra",
-    "giraffe",
-    "elephant",
-    "butterfly"
+  "videos": [
+    "A short animated video of {concept}, smooth motion, child-friendly",
+    "A short animated video of {concept}, smooth motion, child-friendly",
+    "A short animated video of {concept}, smooth motion, child-friendly",
+    "A short animated video of {concept}, smooth motion, child-friendly",
+    "A short animated video of {concept}, smooth motion, child-friendly",
+    "A short animated video of {concept}, smooth motion, child-friendly",
+    "A short animated video of {concept}, smooth motion, child-friendly",
+    "A short animated video of {concept}, smooth motion, child-friendly",
+    "A short animated video of {concept}, smooth motion, child-friendly",
+    "A short animated video of {concept}, smooth motion, child-friendly"
   ],
   "images": [
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    ""
-  ],
-  "videos": [
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    ""
+    "A beautiful, colorful illustration of monkey in a magical setting, perfect for children, vibrant and enchanting."
   ]
 }

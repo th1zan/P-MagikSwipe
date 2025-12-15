@@ -1,0 +1,17 @@
+{
+  "folder": "vehicules-de-chantier",
+  "name": "Vehicules De Chantier",
+  "theme": "vehicules_de_chantier",
+  "slug": "vehicules-de-chantier",
+  "status": "completed",
+  "created_at": "2025-12-11T14:42:08.528075",
+  "updated_at": "2025-12-13T15:25:01.812709",
+  "background_color": null,
+  "thumbnail_url": "/storage/univers/vehicules-de-chantier/00_truck.png",
+  "default_prompts": {
+    "image": "A beautiful, colorful illustration of truck in a magical véhicules_de_chantier setting, perfect for children, vibrant and enchanting.",
+    "video": "A short animated video of truck moving happily and magically in a véhicules_de_chantier environment, joyful and child-friendly."
+  },
+  "num_assets": 10,
+  "music_lyrics": {}
+}
