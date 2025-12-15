@@ -114,7 +114,7 @@
         <div id="tab-images" class="tab-content hidden">
           <div class="mb-6">
             <label class="block text-sm font-semibold text-gray-700 mb-2">Default Image Prompt</label>
-            <textarea id="imagesDefaultPrompt" placeholder="A beautiful 3D illustration of {object}, child-friendly, colorful..."></textarea>
+            <textarea id="imagesDefaultPrompt" placeholder="A beautiful 3D illustration of {concept}, child-friendly, colorful..."></textarea>
             <div class="flex gap-2 mt-3 flex-wrap">
               <button onclick="generateImagePrompts()" class="btn btn-primary">🤖 Generate All Prompts</button>
               <button onclick="generateAllImages()" class="btn btn-success">🎨 Generate All Images</button>
@@ -130,7 +130,7 @@
         <div id="tab-videos" class="tab-content hidden">
           <div class="mb-6">
             <label class="block text-sm font-semibold text-gray-700 mb-2">Default Video Prompt</label>
-            <textarea id="videosDefaultPrompt" placeholder="A short animated video of {object}, smooth motion, child-friendly..."></textarea>
+            <textarea id="videosDefaultPrompt" placeholder="A short animated video of {concept}, smooth motion, child-friendly..."></textarea>
             <div class="flex gap-2 mt-3 flex-wrap">
               <button onclick="generateVideoPrompts()" class="btn btn-primary">🤖 Generate All Prompts</button>
               <button onclick="generateAllVideos()" class="btn btn-success">🎬 Generate All Videos</button>
@@ -160,9 +160,9 @@
 
           <div class="mb-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
             <h3 class="text-lg font-bold text-purple-900 mb-3">🇫🇷 French (Master)</h3>
-             <label class="block text-sm font-semibold text-gray-700 mb-2">Lyrics <span class="text-xs text-gray-500">(max 600 caractères)</span></label>
-             <textarea id="musicLyricsFr" placeholder="[Verse]\nDans le monde magique...\n[Chorus]\nChantons ensemble..." oninput="updateCharCount(this, 'lyricsCharCountFr', 600); updateMusicLyrics('fr', this.value)"></textarea>
-             <div class="text-xs text-right mt-1"><span id="lyricsCharCountFr" class="font-mono">0</span>/600</div>
+             <label class="block text-sm font-semibold text-gray-700 mb-2">Lyrics <span class="text-xs text-gray-500">(max 3000 caractères)</span></label>
+             <textarea id="musicLyricsFr" placeholder="[Verse]\nDans le monde magique...\n[Chorus]\nChantons ensemble..." oninput="updateCharCount(this, 'lyricsCharCountFr', 3000); updateMusicLyrics('fr', this.value)"></textarea>
+             <div class="text-xs text-right mt-1"><span id="lyricsCharCountFr" class="font-mono">0</span>/3000</div>
 
              <label class="block text-sm font-semibold text-gray-700 mb-2 mt-4">Music Style Prompt <span class="text-xs text-gray-500">(10-300 characters)</span></label>
              <textarea id="musicPromptFr" maxlength="300" rows="2" oninput="updateCharCount(this, 'charCountFr'); updateMusicPrompt('fr', this.value)"></textarea>

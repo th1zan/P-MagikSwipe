@@ -1,8 +1,11 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
+import yaml
 import json
 import os
 from projet.generators import generate_image, generate_video, generate_theme_music
 from deep_translator import GoogleTranslator
+from services.storage_service import storage_service
+from services.job_service import create_job
 
 router = APIRouter()
 STORAGE_PATH = "/app/storage"
@@ -36,7 +39,7 @@ def generate_all(universe: str):
     generate_theme_music(theme, universe, music, lyrics)
 
 @router.post("/generate/{universe}/images")
-def generate_images(universe: str, background_tasks: BackgroundTasks):
+def generate_images(universe: str, background_tasks: BackgroundTasks, body: dict = None):
     theme = universe.lower().replace(' ', '_')
     prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
     if not os.path.exists(prompts_path):
@@ -46,6 +49,23 @@ def generate_images(universe: str, background_tasks: BackgroundTasks):
     words = data["words"]
     images = data.get("images", [])
     
+    # Check if async mode requested
+    if body and body.get("async"):
+        def task():
+            for i, word in enumerate(words):
+                prompt = images[i] if i < len(images) else None
+                generate_image(word, theme, i, prompt)
+            return {"count": len(words), "status": "completed"}
+        
+        job_id = create_job(
+            job_type="generate_images",
+            universe=universe,
+            task_fn=task,
+            description=f"Generating {len(words)} images"
+        )
+        return {"job_id": job_id, "message": "Image generation started"}
+    
+    # Synchronous mode (legacy)
     for i, word in enumerate(words):
         prompt = images[i] if i < len(images) else None
         generate_image(word, theme, i, prompt)
@@ -53,7 +73,7 @@ def generate_images(universe: str, background_tasks: BackgroundTasks):
     return {"message": "Images generated"}
 
 @router.post("/generate/{universe}/videos")
-def generate_videos(universe: str):
+def generate_videos(universe: str, body: dict = None):
     theme = universe.lower().replace(' ', '_')
     prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
     if not os.path.exists(prompts_path):
@@ -63,6 +83,25 @@ def generate_videos(universe: str):
     words = data["words"]
     videos = data.get("videos", [])
     
+    # Check if async mode requested
+    if body and body.get("async"):
+        def task():
+            for i, word in enumerate(words):
+                img_path = f"{STORAGE_PATH}/univers/{theme}/{i:02d}_{word.replace(' ', '_')}.png"
+                if os.path.exists(img_path):
+                    motion_prompt = videos[i] if i < len(videos) else None
+                    generate_video(img_path, word, theme, i, motion_prompt)
+            return {"count": len(words), "status": "completed"}
+        
+        job_id = create_job(
+            job_type="generate_videos",
+            universe=universe,
+            task_fn=task,
+            description=f"Generating {len(words)} videos"
+        )
+        return {"job_id": job_id, "message": "Video generation started"}
+    
+    # Synchronous mode (legacy)
     for i, word in enumerate(words):
         img_path = f"{STORAGE_PATH}/univers/{theme}/{i:02d}_{word.replace(' ', '_')}.png"
         if os.path.exists(img_path):
@@ -72,7 +111,7 @@ def generate_videos(universe: str):
     return {"message": "Videos generated"}
 
 @router.post("/generate/{universe}/music/{lang}")
-def generate_music_lang(universe: str, lang: str):
+def generate_music_lang(universe: str, lang: str, body: dict = None):
     theme = universe.lower().replace(' ', '_')
     data_path = os.path.join(STORAGE_PATH, "univers", theme, "data.json")
     if not os.path.exists(data_path):
@@ -85,7 +124,22 @@ def generate_music_lang(universe: str, lang: str):
         music_translations[lang] = {"lyrics": "", "prompt": ""}
     lyrics = music_translations[lang].get("lyrics", "")
     prompt = music_translations[lang].get("prompt", "")
-    # Generate music for this lang
+    
+    # Check if async mode requested
+    if body and body.get("async"):
+        def task():
+            generate_theme_music(theme, theme_name, music_prompt=prompt, lyrics=lyrics if lyrics else None, languages=[lang])
+            return {"lang": lang, "status": "completed"}
+        
+        job_id = create_job(
+            job_type="generate_music",
+            universe=universe,
+            task_fn=task,
+            description=f"Generating music for {lang.upper()}"
+        )
+        return {"job_id": job_id, "message": "Music generation started"}
+    
+    # Synchronous mode (legacy)
     generate_theme_music(theme, theme_name, music_prompt=prompt, lyrics=lyrics if lyrics else None, languages=[lang])
     return {"message": f"Music for {lang} generated"}
 
@@ -97,12 +151,13 @@ def generate_music_prompts(universe: str):
         raise HTTPException(status_code=404, detail="Universe not found")
 
     # Load default prompts
-    defaults_path = os.path.join(STORAGE_PATH, "default_prompts.json")
+    defaults_path = os.path.join(STORAGE_PATH, "prompts", "defaults.yaml")
     if not os.path.exists(defaults_path):
         raise HTTPException(status_code=404, detail="Default prompts not found")
 
     with open(defaults_path, 'r') as f:
-        defaults = json.load(f)
+        data = yaml.safe_load(f)
+        defaults = data.get("defaults", {})
 
     default_music_prompt = defaults.get("music", "")
     if not default_music_prompt:
@@ -185,10 +240,14 @@ def regenerate_lyrics_lang(universe: str, lang: str):
 
     # Get French lyrics as base
     french_lyrics = ""
-    if "fr" in music_translations and music_translations["fr"].get("lyrics"):
+    if "fr" in music_translations and isinstance(music_translations["fr"], dict) and music_translations["fr"].get("lyrics"):
         french_lyrics = music_translations["fr"]["lyrics"]
     else:
         raise HTTPException(status_code=400, detail="No French lyrics found to regenerate from")
+
+    # S'assurer que la langue existe avec le bon format
+    if not isinstance(music_translations.get(lang), dict):
+        music_translations[lang] = {"lyrics": "", "prompt": ""}
 
     if lang == "fr":
         # Regenerate French lyrics using AI (simplified - just keep current for now)
@@ -205,9 +264,9 @@ def regenerate_lyrics_lang(universe: str, lang: str):
 
     # Save updated data
     with open(data_path, 'w') as f:
-        json.dump(data, f, indent=2)
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
-    return {"message": f"Lyrics regenerated for {lang}"}
+    return {"message": f"Lyrics regenerated for {lang}", "lyrics": music_translations[lang]["lyrics"]}
 
 @router.post("/universes/{universe}/lyrics/generate")
 def generate_lyrics_ai(universe: str, lyrics_data: dict):
@@ -352,77 +411,59 @@ def generate_translations_endpoint(universe: str):
 
 @router.post("/universes/{universe}/images/prompts/generate")
 def generate_image_prompts_endpoint(universe: str, data: dict):
-    theme = universe.lower().replace(' ', '_')
     default_prompt = data.get("defaultPrompt", "")
 
     if not default_prompt:
         # Load from defaults
-        defaults_path = os.path.join(STORAGE_PATH, "default_prompts.json")
-        if os.path.exists(defaults_path):
-            with open(defaults_path, 'r') as f:
-                defaults = json.load(f)
-            default_prompt = defaults.get("images", "A beautiful 3D illustration of {concept}, child-friendly, colorful...")
+        defaults = storage_service.load_default_prompts()
+        default_prompt = defaults.get("images", "A beautiful 3D illustration of {object}, child-friendly, colorful...")
 
-    # Load concepts
-    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
-    if not os.path.exists(prompts_path):
-        raise HTTPException(status_code=404, detail="Prompts not found")
-
-    with open(prompts_path, 'r') as f:
-        prompts_data = json.load(f)
-
-    concepts = prompts_data.get("words", [])
-    if not concepts:
-        raise HTTPException(status_code=400, detail="No concepts found")
+    # Load objects
+    objects = storage_service.load_objects(universe)
+    if not objects:
+        raise HTTPException(status_code=400, detail="No objects found")
 
     # Generate prompts
-    image_prompts = []
-    for concept in concepts:
-        prompt = default_prompt.replace("{concept}", concept)
-        image_prompts.append(prompt)
+    image_prompts = storage_service.generate_prompts_for_objects(
+        objects=objects,
+        default_prompt=default_prompt
+    )
 
-    # Save to prompts.json
-    prompts_data["images"] = image_prompts
-    with open(prompts_path, 'w') as f:
-        json.dump(prompts_data, f, indent=2)
+    # Save prompts
+    storage_service.update_prompts(
+        identifier=universe,
+        prompts=image_prompts,
+        prompts_type="images"
+    )
 
     return {"message": "Image prompts generated", "prompts": image_prompts}
 
 @router.post("/universes/{universe}/videos/prompts/generate")
 def generate_video_prompts_endpoint(universe: str, data: dict):
-    theme = universe.lower().replace(' ', '_')
     default_prompt = data.get("defaultPrompt", "")
 
     if not default_prompt:
         # Load from defaults
-        defaults_path = os.path.join(STORAGE_PATH, "default_prompts.json")
-        if os.path.exists(defaults_path):
-            with open(defaults_path, 'r') as f:
-                defaults = json.load(f)
-            default_prompt = defaults.get("videos", "A short animated video of {concept}, smooth motion, child-friendly...")
+        defaults = storage_service.load_default_prompts()
+        default_prompt = defaults.get("videos", "A short animated video of {object}, smooth motion, child-friendly...")
 
-    # Load concepts
-    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
-    if not os.path.exists(prompts_path):
-        raise HTTPException(status_code=404, detail="Prompts not found")
-
-    with open(prompts_path, 'r') as f:
-        prompts_data = json.load(f)
-
-    concepts = prompts_data.get("words", [])
-    if not concepts:
-        raise HTTPException(status_code=400, detail="No concepts found")
+    # Load objects
+    objects = storage_service.load_objects(universe)
+    if not objects:
+        raise HTTPException(status_code=400, detail="No objects found")
 
     # Generate prompts
-    video_prompts = []
-    for concept in concepts:
-        prompt = default_prompt.replace("{concept}", concept)
-        video_prompts.append(prompt)
+    video_prompts = storage_service.generate_prompts_for_objects(
+        objects=objects,
+        default_prompt=default_prompt
+    )
 
-    # Save to prompts.json
-    prompts_data["videos"] = video_prompts
-    with open(prompts_path, 'w') as f:
-        json.dump(prompts_data, f, indent=2)
+    # Save prompts
+    storage_service.update_prompts(
+        identifier=universe,
+        prompts=video_prompts,
+        prompts_type="videos"
+    )
 
     return {"message": "Video prompts generated", "prompts": video_prompts}
 
@@ -471,22 +512,29 @@ def regenerate_thumbnail(universe: str):
 def regenerate_image(universe: str, index: int):
     theme = universe.lower().replace(' ', '_')
 
-    # Load prompts
-    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
-    if not os.path.exists(prompts_path):
-        raise HTTPException(status_code=404, detail="Prompts not found")
+    # Load data.json for items
+    data_path = os.path.join(STORAGE_PATH, "univers", theme, "data.json")
+    if not os.path.exists(data_path):
+        raise HTTPException(status_code=404, detail="Data not found")
 
-    with open(prompts_path, 'r') as f:
-        prompts_data = json.load(f)
+    with open(data_path, 'r') as f:
+        data = json.load(f)
 
-    concepts = prompts_data.get("words", [])
-    image_prompts = prompts_data.get("images", [])
-
-    if index >= len(concepts):
+    items = data.get("items", [])
+    if index >= len(items):
         raise HTTPException(status_code=400, detail="Invalid index")
 
-    concept = concepts[index]
-    prompt = image_prompts[index] if index < len(image_prompts) else None
+    item = items[index]
+    concept = item.get("title", "")
+
+    # Load image prompt from prompts.json if exists
+    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+    prompt = None
+    if os.path.exists(prompts_path):
+        with open(prompts_path, 'r') as f:
+            prompts_data = json.load(f)
+        image_prompts = prompts_data.get("images", [])
+        prompt = image_prompts[index] if index < len(image_prompts) else None
 
     # Generate image
     generate_image(concept, theme, index, prompt)
@@ -497,22 +545,29 @@ def regenerate_image(universe: str, index: int):
 def regenerate_video(universe: str, index: int):
     theme = universe.lower().replace(' ', '_')
 
-    # Load prompts
-    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
-    if not os.path.exists(prompts_path):
-        raise HTTPException(status_code=404, detail="Prompts not found")
+    # Load data.json for items
+    data_path = os.path.join(STORAGE_PATH, "univers", theme, "data.json")
+    if not os.path.exists(data_path):
+        raise HTTPException(status_code=404, detail="Data not found")
 
-    with open(prompts_path, 'r') as f:
-        prompts_data = json.load(f)
+    with open(data_path, 'r') as f:
+        data = json.load(f)
 
-    concepts = prompts_data.get("words", [])
-    video_prompts = prompts_data.get("videos", [])
-
-    if index >= len(concepts):
+    items = data.get("items", [])
+    if index >= len(items):
         raise HTTPException(status_code=400, detail="Invalid index")
 
-    concept = concepts[index]
-    prompt = video_prompts[index] if index < len(video_prompts) else None
+    item = items[index]
+    concept = item.get("title", "")
+
+    # Load video prompt from prompts.json if exists
+    prompts_path = os.path.join(STORAGE_PATH, "univers", theme, "prompts.json")
+    prompt = None
+    if os.path.exists(prompts_path):
+        with open(prompts_path, 'r') as f:
+            prompts_data = json.load(f)
+        video_prompts = prompts_data.get("videos", [])
+        prompt = video_prompts[index] if index < len(video_prompts) else None
 
     # Check if image exists for video generation
     img_path = f"{STORAGE_PATH}/univers/{theme}/{index:02d}_{concept.replace(' ', '_')}.png"

@@ -25,6 +25,7 @@ IMPORTANT FORMAT REQUIREMENTS:
 - Use ONLY these structure tags: [intro], [verse], [chorus], [bridge], [outro]
 - Each line must be separated by a line break
 - to separate lines. Supports [intro][verse][chorus][bridge][outro]. Valid input: 10-600 characters
+- Valid input: 10-600 characters
 - Style: Simple, poetic, child-friendly, with rhythm and rhymes
 - Use \\n to separate lines within sections
 

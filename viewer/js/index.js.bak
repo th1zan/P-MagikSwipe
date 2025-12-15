@@ -86,40 +86,38 @@ async function loadUniverse(folder) {
 }
 
 function populateOverview() {
-  const items = universeData.items || [];
-  const imagesReady = items.filter(item => item.image).length;
-  const videosReady = items.filter(item => item.video).length;
+  const concepts = universeData.objects || [];
+  const imagesReady = (universeData.images || []).filter(Boolean).length;
+  const videosReady = (universeData.videos || []).filter(Boolean).length;
   const musicLangs = Object.keys(universeData.music_translations || {}).length;
 
   document.getElementById('universeInfo').innerHTML = `
-    <div class="bg-blue-50 p-4 rounded-xl"><div class="text-2xl font-bold text-blue-600">${items.length}</div><div class="text-sm text-gray-600">Concepts</div></div>
-    <div class="bg-green-50 p-4 rounded-xl"><div class="text-2xl font-bold text-green-600">${imagesReady}/${items.length}</div><div class="text-sm text-gray-600">Images</div></div>
-    <div class="bg-purple-50 p-4 rounded-xl"><div class="text-2xl font-bold text-purple-600">${videosReady}/${items.length}</div><div class="text-sm text-gray-600">Videos</div></div>
+    <div class="bg-blue-50 p-4 rounded-xl"><div class="text-2xl font-bold text-blue-600">${concepts.length}</div><div class="text-sm text-gray-600">Concepts</div></div>
+    <div class="bg-green-50 p-4 rounded-xl"><div class="text-2xl font-bold text-green-600">${imagesReady}/${concepts.length}</div><div class="text-sm text-gray-600">Images</div></div>
+    <div class="bg-purple-50 p-4 rounded-xl"><div class="text-2xl font-bold text-purple-600">${videosReady}/${concepts.length}</div><div class="text-sm text-gray-600">Videos</div></div>
     <div class="bg-pink-50 p-4 rounded-xl"><div class="text-2xl font-bold text-pink-600">${musicLangs}/5</div><div class="text-sm text-gray-600">Music Languages</div></div>
   `;
 }
 
 function populateConcepts() {
-  const items = universeData.items || [];
-  document.getElementById('conceptCount').textContent = items.length;
-  document.getElementById('conceptsList').innerHTML = items.map((item, i) => `
+  const concepts = universeData.objects || [];
+  document.getElementById('conceptCount').textContent = concepts.length;
+  document.getElementById('conceptsList').innerHTML = concepts.map((c, i) => `
     <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
       <span class="text-gray-400 font-mono text-sm w-8">${i + 1}.</span>
-      <input type="text" value="${item.title}" class="flex-1" onchange="updateConcept(${i}, this.value)">
+      <input type="text" value="${c}" class="flex-1" onchange="updateConcept(${i}, this.value)">
       <button onclick="deleteConcept(${i})" class="text-red-500 hover:text-red-700">Delete</button>
     </div>
   `).join('');
 }
 
 function populateTranslations() {
-  const items = universeData.items || [];
+  const concepts = universeData.objects || [];
   const translations = universeData.translations || {};
   const langs = ['en', 'fr', 'es', 'it', 'de'];
 
   const list = document.getElementById('translationsList');
-  list.innerHTML = items.map((item, i) => {
-    const concept = item.title || '';
-    return `
+  list.innerHTML = concepts.map((concept, i) => `
     <div class="mb-6 p-4 bg-gray-50 rounded-xl">
       <div class="flex items-center justify-between mb-3">
         <h4 class="text-lg font-bold text-gray-800">${concept}</h4>
@@ -134,7 +132,7 @@ function populateTranslations() {
               ${lang.toUpperCase()} ${getLangFlag(lang)}
             </label>
             <input type="text"
-                   value="${item.title_translations?.[lang] || translations[lang]?.[i] || ''}"
+                   value="${translations[lang]?.[i] || 'empty'}"
                    placeholder="Translation..."
                    data-lang="${lang}"
                    data-index="${i}"
@@ -143,17 +141,18 @@ function populateTranslations() {
         `).join('')}
       </div>
     </div>
-  `}).join('');
+  `).join('');
 }
 
 function populateImages() {
-  const items = universeData.items || [];
+  const concepts = universeData.objects || [];
   const imagePrompts = universeData.images || [];
 
   const grid = document.getElementById('imagesGrid');
-  grid.innerHTML = items.map((item, i) => {
-    const concept = item.title || '';
+  grid.innerHTML = concepts.map((concept, i) => {
     const prompt = imagePrompts[i] || '';
+    const item = universeData.items?.[i];
+    if (!item) return ''; // Skip if no item data
     const imagePath = CONFIG.getAssetPath(currentUniverse, item.image);
 
     return `
@@ -174,13 +173,14 @@ function populateImages() {
 }
 
 function populateVideos() {
-  const items = universeData.items || [];
+  const concepts = universeData.objects || [];
   const videoPrompts = universeData.videos || [];
 
   const grid = document.getElementById('videosGrid');
-  grid.innerHTML = items.map((item, i) => {
-    const concept = item.title || '';
+  grid.innerHTML = concepts.map((concept, i) => {
     const prompt = videoPrompts[i] || '';
+    const item = universeData.items?.[i];
+    if (!item) return ''; // Skip if no item data
     const videoPath = CONFIG.getAssetPath(currentUniverse, CONFIG.normalizeVideoExtension(item.video));
 
     return `
@@ -221,7 +221,7 @@ function populateMusic() {
   // Update word count for French lyrics
   const frLyricsEl = document.getElementById('musicLyricsFr');
   if (frLyricsEl) {
-    updateCharCount(frLyricsEl, 'lyricsCharCountFr', 600);
+    updateCharCount(frLyricsEl, 'lyricsCharCountFr', 3000);
   }
 
   // Set French music player src
@@ -240,9 +240,9 @@ function populateMusic() {
     return `
       <div class="p-4 bg-gray-50 rounded-xl">
         <h3 class="text-lg font-bold text-gray-800 mb-3">${getLangFlag(lang)} ${lang.toUpperCase()}</h3>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Lyrics <span class="text-xs text-gray-500">(max 600 chars)</span></label>
-        <textarea id="musicLyrics${lang}" placeholder="Translated lyrics..." oninput="updateCharCount(this, 'lyricsCharCount${lang}', 600); updateMusicLyrics('${lang}', this.value)">${data.lyrics}</textarea>
-        <div class="text-xs text-right mt-1"><span id="lyricsCharCount${lang}" class="font-mono">${(data.lyrics || '').length}</span>/600</div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Lyrics <span class="text-xs text-gray-500">(max 3000 chars)</span></label>
+        <textarea id="musicLyrics${lang}" placeholder="Translated lyrics..." oninput="updateCharCount(this, 'lyricsCharCount${lang}', 3000); updateMusicLyrics('${lang}', this.value)">${data.lyrics}</textarea>
+        <div class="text-xs text-right mt-1"><span id="lyricsCharCount${lang}" class="font-mono">${(data.lyrics || '').length}</span>/3000</div>
 
         ${!hasLyrics ? `
           <button onclick="translateAllToLang('${lang}')" class="btn btn-secondary mt-2 w-full">
@@ -773,7 +773,7 @@ async function translateAllToLang(lang) {
     // Mettre à jour les lyrics
     document.getElementById(`musicLyrics${lang}`).value = translatedLyrics;
     updateMusicLyrics(lang, translatedLyrics);
-    updateCharCount(document.getElementById(`musicLyrics${lang}`), `lyricsCharCount${lang}`, 600);
+    updateCharCount(document.getElementById(`musicLyrics${lang}`), `lyricsCharCount${lang}`, 3000);
 
     // Traduire le prompt si présent
     if (frPrompt.trim()) {

@@ -13,7 +13,9 @@ app.add_middleware(
 )
 
 # Routes
-from routes import generation, universes, prompts
+from routes import generation, universes, prompts, media, jobs
+app.include_router(jobs.router, prefix="/api", tags=["jobs"])
+app.include_router(media.router, prefix="/api", tags=["media"])
 app.include_router(universes.router, prefix="/api", tags=["universes"])
 app.include_router(generation.router, prefix="/api", tags=["generation"])
 app.include_router(prompts.router, prefix="/api", tags=["prompts"])

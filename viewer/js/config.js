@@ -38,6 +38,11 @@ const CONFIG = {
     if (filename.endsWith('.webm')) return filename;
     // Sinon, remplacer .mp4 par .webm
     return filename.replace(/\.mp4$/i, '.webm');
+  },
+  
+  // Helper pour construire une URL d'API
+  buildApiUrl: function(identifier, endpoint) {
+    return `${this.API_BASE}/universes/${identifier}${endpoint}`;
   }
 };
 

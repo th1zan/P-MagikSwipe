@@ -52,3 +52,42 @@
   font-weight: bold;
   backdrop-filter: blur(10px);
 }
+
+/* ========== SLIDESHOW STYLES ========== */
+
+.btn-slideshow {
+  background: rgba(255,255,255,0.3);
+  backdrop-filter: blur(4px);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-slideshow:hover {
+  background: rgba(255,255,255,0.5);
+}
+
+#imagesGrid .asset-card {
+  background: rgba(255,255,255,0.2);
+  padding: 0.5rem;
+  border-radius: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+#imagesGrid .asset-card:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+#presentationMode {
+  z-index: 40;
+}
+
+#videoModal video {
+  max-height: 90vh;
+  max-width: 90vw;
+  border-radius: 1rem;
+}

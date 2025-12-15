@@ -1,31 +1,26 @@
 services:
-  viewer:
+  # Backoffice de création (anciennement "viewer")
+  studio:
     build: ./viewer
     ports:
       - "8081:80"
     volumes:
       - ./viewer:/usr/share/nginx/html
       - ./storage:/usr/share/nginx/html/storage
+    restart: unless-stopped
 
+  # API principale (avec génération intégrée)
   api:
-    build: ./api          # nouveau Dockerfile FastAPI
+    build: ./api
     ports:
       - "8000:8000"
     volumes:
       - ./storage:/app/storage
       - ./api:/app
-      - ./projet:/app/projet
     environment:
       - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-
-  generator:              # tu peux garder ou fusionner avec api
-    build: ./projet
-    volumes:
-      - ./projet:/app
-      - ./storage:/app/storage
-    environment:
-      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    restart: unless-stopped
+    depends_on:
+      - studio
