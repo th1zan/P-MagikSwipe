@@ -356,7 +356,11 @@ class GenerateMusicRequest(BaseModel):
 
 
 class GenerateAllRequest(BaseModel):
-    """Request to generate all assets (images + videos)."""
+    """Request to generate complete universe content."""
+    theme: str
+    count: int = Field(default=10, ge=1, le=50)
+    generate_videos: bool = True
+    generate_music: bool = True
     regenerate: bool = False
 
 

@@ -19,12 +19,13 @@ async function loadUniversesList() {
   try {
     const res = await fetch(`${API_BASE}/universes`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const universes = await res.json();
+    const data = await res.json();
+    const universes = data.items || [];
     const select = document.getElementById('universeSelect');
     select.innerHTML = '<option value="">Choose a universe...</option>';
     universes.forEach(u => {
       const opt = document.createElement('option');
-      opt.value = u.folder;
+      opt.value = u.slug;
       opt.textContent = u.name;
       select.appendChild(opt);
     });
@@ -44,14 +45,16 @@ async function loadUniverse(folder) {
   currentUniverse = folder;
   console.log('Chargement de l\'univers:', folder);
   try {
-    const [universeRes, defaultsRes] = await Promise.all([
+    const [universeRes, assetsRes, musicRes] = await Promise.all([
       fetch(`${API_BASE}/universes/${folder}`),
-      fetch(`${API_BASE}/universes/${folder}/assets`)
+      fetch(`${API_BASE}/universes/${folder}/assets`),
+      fetch(`${API_BASE}/universes/${folder}/music-prompts`).catch(() => ({ ok: false })) // Optional
     ]);
 
     if (!universeRes.ok) throw new Error(`HTTP ${universeRes.status}`);
     const universe = await universeRes.json();
-    const assets = await defaultsRes.json();
+    const assets = await assetsRes.json();
+    const musicPrompts = musicRes.ok ? await musicRes.json() : [];
 
     // Map backend response to viewer's expected format
     universeData = {
@@ -66,7 +69,8 @@ async function loadUniverse(folder) {
       })) || [],
       description: universe.description || '',
       translations: {},
-      music_translations: {}
+      music_translations: {},
+      visibility: universe.is_public
     };
 
     // Load prompts for each asset if available
@@ -88,6 +92,14 @@ async function loadUniverse(folder) {
       });
     }
 
+    // Load music prompts
+    musicPrompts.forEach(mp => {
+      universeData.music_translations[mp.language] = {
+        lyrics: mp.lyrics || '',
+        prompt: mp.prompt || ''
+      };
+    });
+
     // Load default prompts from universe prompts
     const defaults = {
       objects: universe.prompts?.default_image_prompt || 'Create a beautiful, colorful image of {concept} for children',
@@ -102,6 +114,10 @@ async function loadUniverse(folder) {
     document.getElementById('conceptsDefaultPrompt').value = defaults.objects;
     document.getElementById('imagesDefaultPrompt').value = defaults.images;
     document.getElementById('videosDefaultPrompt').value = defaults.videos;
+
+    // Set visibility radio buttons
+    document.getElementById('visibilityPublic').checked = universeData.visibility;
+    document.getElementById('visibilityPrivate').checked = !universeData.visibility;
 
     populateOverview();
     populateConcepts();
@@ -199,6 +215,7 @@ function populateImages() {
         <div class="p-4">
           <h4 class="font-bold text-gray-800 mb-2">${concept}</h4>
           <p class="text-xs text-gray-600 line-clamp-2">${prompt || 'No prompt yet'}</p>
+          <button onclick="event.stopPropagation(); regenerateAsset('image', ${i})" class="btn btn-secondary text-xs mt-2">🔄 Regenerate</button>
         </div>
       </div>
     `;
@@ -229,6 +246,7 @@ function populateVideos() {
         <div class="p-4">
           <h4 class="font-bold text-gray-800 mb-2">${concept}</h4>
           <p class="text-xs text-gray-600 line-clamp-2">${prompt || 'No prompt yet'}</p>
+          <button onclick="event.stopPropagation(); regenerateAsset('video', ${i})" class="btn btn-secondary text-xs mt-2">🔄 Regenerate</button>
         </div>
       </div>
     `;
@@ -257,7 +275,7 @@ function populateMusic() {
   }
 
   // Set French music player src
-  const frMusicSrc = CONFIG.getAssetPath(currentUniverse, 'music_fr.mp3');
+  const frMusicSrc = CONFIG.getAssetPath(currentUniverse, 'fr.mp3');
   document.getElementById('musicSourceFr').src = frMusicSrc;
   document.getElementById('musicPlayerFr').load();
 
@@ -266,7 +284,7 @@ function populateMusic() {
 
   container.innerHTML = langs.map(lang => {
     const data = musicData[lang] || { lyrics: '', prompt: '' };
-    const musicSrc = CONFIG.getAssetPath(currentUniverse, `music_${lang}.mp3`);
+    const musicSrc = CONFIG.getAssetPath(currentUniverse, `${lang}.mp3`);
     const hasLyrics = data.lyrics && data.lyrics.trim() !== '';
     
     return `
@@ -323,6 +341,18 @@ function showCreateModal() {
           <label class="block text-sm font-semibold text-gray-700 mb-2">Theme Description</label>
           <textarea id="newUniverseTheme" placeholder="e.g., Red Ferrari car, Tesla Model S, yellow school bus..."></textarea>
 
+          <label class="block text-sm font-semibold text-gray-700 mb-2 mt-4">Visibility</label>
+          <div class="flex gap-4 mt-2">
+            <label class="flex items-center gap-2">
+              <input type="radio" name="newUniverseVisibility" value="true" checked>
+              <span>Public</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="radio" name="newUniverseVisibility" value="false">
+              <span>Private</span>
+            </label>
+          </div>
+
           <div class="flex gap-3 mt-6">
             <button onclick="createUniverse()" class="btn btn-primary flex-1">Create</button>
             <button onclick="closeCreateModal()" class="btn btn-secondary">Cancel</button>
@@ -342,7 +372,7 @@ function closeCreateModal(event) {
 
 async function createUniverse() {
   const name = document.getElementById('newUniverseName').value.trim();
-  const theme = document.getElementById('newUniverseTheme').value.trim();
+  const isPublic = document.querySelector('input[name="newUniverseVisibility"]:checked').value === 'true';
 
   if (!name) {
     showToast('Please enter a universe name', 'error');
@@ -353,7 +383,7 @@ async function createUniverse() {
     const res = await fetch(`${API_BASE}/universes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, theme })
+      body: JSON.stringify({ name, is_public: isPublic })
     });
 
     if (res.ok) {
@@ -373,30 +403,38 @@ async function createUniverse() {
 }
 
 async function saveDescription() {
-   if (!currentUniverse) return;
+  // Description field not supported in backend UniversUpdate schema
+  showToast('Description saving not implemented in backend', 'info');
+}
 
-   const description = document.getElementById('descriptionInput').value;
+async function saveVisibility() {
+  const isPublic = document.getElementById('visibilityPublic').checked;
 
-   try {
-     const res = await fetch(`${API_BASE}/universes/${currentUniverse}`, {
-       method: 'PATCH',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ description })
-     });
+  if (!currentUniverse) {
+    showToast('No universe selected', 'error');
+    return;
+  }
 
-     if (res.ok) {
-       showToast('Description saved!', 'success');
-       universeData.description = description;
-     } else {
-       throw new Error('Failed to save description');
-     }
-   } catch (e) {
-     showToast('Failed to save description', 'error');
-     console.error(e);
-   }
- }
+  try {
+    const res = await fetch(`${API_BASE}/universes/${currentUniverse}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_public: isPublic })
+    });
 
-  async function renameMediaFiles() {
+    if (res.ok) {
+      universeData.visibility = isPublic;
+      showToast('Visibility saved successfully!', 'success');
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch (e) {
+    console.error('Erreur sauvegarde visibilité:', e);
+    showToast('Failed to save visibility', 'error');
+  }
+}
+
+async function renameMediaFiles() {
     if (!currentUniverse) return;
 
     // Backend doesn't have rename-media endpoint
@@ -653,23 +691,58 @@ function closeAssetModal(event) {
 }
 
 async function saveAssetPrompt(type, index) {
-  if (!currentUniverse) return;
+  if (!currentUniverse || !universeData.items[index]) return;
 
   const prompt = document.getElementById('modalPrompt').value;
   const key = type === 'image' ? 'images' : 'videos';
+  const assetId = universeData.items[index].id;
+  const field = type === 'image' ? 'custom_image_prompt' : 'custom_video_prompt';
 
-  // Update local data
-  universeData[key][index] = prompt;
+  try {
+    const res = await fetch(`${API_BASE}/universes/${currentUniverse}/assets/${assetId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: prompt })
+    });
 
-  // Backend requires updating individual assets, which is more complex
-  // For now, just update local data and show success
-  showToast('Prompt saved locally!', 'success');
+    if (res.ok) {
+      // Update local data
+      universeData[key][index] = prompt;
+      showToast('Prompt saved successfully!', 'success');
 
-  // Refresh the grid
-  if (type === 'image') {
-    populateImages();
-  } else {
-    populateVideos();
+      // Refresh the grid
+      if (type === 'image') {
+        populateImages();
+      } else {
+        populateVideos();
+      }
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch (e) {
+    console.error('Erreur sauvegarde prompt:', e);
+    showToast('Failed to save prompt', 'error');
+  }
+}
+
+async function regenerateAsset(type, index) {
+  if (!currentUniverse || !universeData.items[index]) return;
+
+  const assetId = universeData.items[index].id;
+
+  try {
+    await runJobWithUI({
+      endpoint: `/generate/${currentUniverse}/${type}s`,
+      params: { asset_ids: [assetId], async: true },
+      buttonElement: event?.target,
+      successMessage: `${type.charAt(0).toUpperCase() + type.slice(1)} regenerated!`,
+      onComplete: () => {
+        loadUniverse(currentUniverse);
+      }
+    });
+  } catch (e) {
+    console.error('Erreur régénération asset:', e);
+    showToast(`Failed to regenerate ${type}`, 'error');
   }
 }
 
@@ -810,44 +883,187 @@ function addConceptManually() {
 async function saveConcepts() {
   if (!currentUniverse) return;
 
-  // Backend requires updating individual assets, which is complex
-  // For now, just show success for local changes
-  showToast('Concepts saved locally!', 'success');
+  // Concepts are generated and applied to assets; no direct backend save for concepts list
+  showToast('Concepts are not saved to backend (generated dynamically)', 'info');
 }
 
 async function saveTranslations() {
-  if (!currentUniverse) return;
+  if (!currentUniverse || !universeData) return;
 
-  // Backend translation storage is different, for now just local save
-  showToast('Translations saved locally!', 'success');
+  try {
+    // Save universe name translations
+    const universeTranslations = {};
+    for (const lang in universeData.translations) {
+      if (lang !== 'fr' && universeData.translations[lang] && universeData.translations[lang][0]) {
+        universeTranslations[lang] = universeData.translations[lang][0]; // Assuming first item is universe name translation
+      }
+    }
+
+    if (Object.keys(universeTranslations).length > 0) {
+      const res = await fetch(`${API_BASE}/universes/${currentUniverse}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ translations: universeTranslations })
+      });
+      if (!res.ok) throw new Error(`Universe translations failed: ${res.status}`);
+    }
+
+    // Save asset title translations
+    for (let i = 0; i < universeData.items.length; i++) {
+      const asset = universeData.items[i];
+      const assetTranslations = {};
+      for (const lang in universeData.translations) {
+        if (universeData.translations[lang] && universeData.translations[lang][i]) {
+          assetTranslations[lang] = universeData.translations[lang][i];
+        }
+      }
+      if (Object.keys(assetTranslations).length > 0) {
+        const res = await fetch(`${API_BASE}/universes/${currentUniverse}/assets/${asset.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ translations: assetTranslations })
+        });
+        if (!res.ok) throw new Error(`Asset ${asset.id} translations failed: ${res.status}`);
+      }
+    }
+
+    showToast('Translations saved successfully!', 'success');
+  } catch (e) {
+    console.error('Erreur sauvegarde traductions:', e);
+    showToast('Failed to save translations', 'error');
+  }
 }
 
 async function saveMusic() {
-  if (!currentUniverse) return;
+  if (!currentUniverse || !universeData.music_translations) return;
 
-  // Backend music storage is different, for now just local save
-  showToast('Music data saved locally!', 'success');
+  try {
+    const promises = [];
+    for (const lang in universeData.music_translations) {
+      const data = universeData.music_translations[lang];
+      if (data.lyrics || data.prompt) {
+        promises.push(
+          fetch(`${API_BASE}/universes/${currentUniverse}/music-prompts/${lang}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lyrics: data.lyrics,
+              prompt: data.prompt
+            })
+          }).then(res => {
+            if (!res.ok) throw new Error(`Failed to save ${lang}: ${res.status}`);
+          })
+        );
+      }
+    }
+
+    await Promise.all(promises);
+    showToast('Music data saved successfully!', 'success');
+  } catch (e) {
+    console.error('Erreur sauvegarde musique:', e);
+    showToast('Failed to save music data', 'error');
+  }
 }
 
 async function generateLyricsAI() {
   if (!currentUniverse) return;
 
-  // Backend doesn't have lyrics generation endpoint
-  showToast('Lyrics generation not available in new backend', 'info');
+  // Use concepts generation with lyrics-focused prompt
+  try {
+    const theme = universeData?.theme || currentUniverse;
+    const res = await fetch(`${API_BASE}/generate/${currentUniverse}/concepts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        theme: `Create fun children's song lyrics about ${theme}`,
+        count: 1,
+        language: 'fr'
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const lyrics = data.concepts?.[0] || 'Generated lyrics placeholder';
+      updateMusicLyrics('fr', lyrics);
+      showToast('Lyrics generated!', 'success');
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch (e) {
+    console.error('Erreur génération lyrics:', e);
+    showToast('Failed to generate lyrics', 'error');
+  }
 }
 
 async function translateLyrics() {
   if (!currentUniverse) return;
 
-  // Backend doesn't have lyrics translation endpoint
-  showToast('Lyrics translation not available in new backend', 'info');
+  const frLyrics = universeData.music_translations?.fr?.lyrics;
+  if (!frLyrics) {
+    showToast('No French lyrics to translate', 'error');
+    return;
+  }
+
+  const langs = ['en', 'es', 'it', 'de'];
+  try {
+    const promises = langs.map(lang =>
+      fetch(`${API_BASE}/generate/${currentUniverse}/concepts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          theme: `Translate these French song lyrics to ${lang.toUpperCase()}: "${frLyrics}"`,
+          count: 1,
+          language: lang
+        })
+      }).then(async res => {
+        if (res.ok) {
+          const data = await res.json();
+          const translated = data.concepts?.[0] || '';
+          updateMusicLyrics(lang, translated);
+        }
+      })
+    );
+
+    await Promise.all(promises);
+    showToast('Lyrics translated to all languages!', 'success');
+  } catch (e) {
+    console.error('Erreur traduction lyrics:', e);
+    showToast('Failed to translate lyrics', 'error');
+  }
 }
 
 async function translateLyricsToLang(lang) {
   if (!currentUniverse) return;
 
-  // Backend doesn't have lyrics translation endpoint
-  showToast('Lyrics translation not available in new backend', 'info');
+  const frLyrics = universeData.music_translations?.fr?.lyrics;
+  if (!frLyrics) {
+    showToast('No French lyrics to translate', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/generate/${currentUniverse}/concepts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        theme: `Translate these French song lyrics to ${lang.toUpperCase()}: "${frLyrics}"`,
+        count: 1,
+        language: lang
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const translated = data.concepts?.[0] || '';
+      updateMusicLyrics(lang, translated);
+      showToast(`Lyrics translated to ${lang.toUpperCase()}!`, 'success');
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch (e) {
+    console.error('Erreur traduction lyrics:', e);
+    showToast('Failed to translate lyrics', 'error');
+  }
 }
 
 async function generateMusic(lang) {
@@ -1066,7 +1282,7 @@ function changeLanguage(lang) {
 }
 
 function startMusic() {
-  const musicPath = CONFIG.getAssetPath(currentUniverse, `music_${currentLang}.mp3`);
+  const musicPath = CONFIG.getAssetPath(currentUniverse, `${currentLang}.mp3`);
   const audio = document.getElementById('bgMusic');
   audio.src = musicPath;
   audio.volume = isMuted ? 0 : 0.5;

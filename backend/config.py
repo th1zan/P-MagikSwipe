@@ -8,9 +8,9 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     # Storage paths
-    STORAGE_PATH: Path = Path("/app/storage")
-    DB_PATH: Path = Path("/app/storage/db/local.db")
-    BUCKETS_PATH: Path = Path("/app/storage/buckets")
+    STORAGE_PATH: Path = Path(os.getenv("STORAGE_PATH", "/tmp/storage"))
+    DB_PATH: Path = Path(os.getenv("STORAGE_PATH", "/tmp/storage") + "/db/local.db")
+    BUCKETS_PATH: Path = Path(os.getenv("STORAGE_PATH", "/tmp/storage") + "/buckets")
     
     # Supabase
     SUPABASE_URL: str = ""

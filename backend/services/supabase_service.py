@@ -60,14 +60,18 @@ class SupabaseService:
     def get_univers_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:
         """Fetch a universe by slug."""
         self._require_client()
-        
-        response = self.client.table("univers")\
-            .select("*")\
-            .eq("slug", slug)\
-            .single()\
-            .execute()
-        
-        return response.data if response.data else None
+
+        try:
+            response = self.client.table("univers")\
+                .select("*")\
+                .eq("slug", slug)\
+                .single()\
+                .execute()
+
+            return response.data if response.data else None
+        except Exception:
+            # Handle case where no results found (Supabase throws exception for .single() with 0 results)
+            return None
     
     def get_univers_by_id(self, univers_id: int) -> Optional[Dict[str, Any]]:
         """Fetch a universe by ID."""

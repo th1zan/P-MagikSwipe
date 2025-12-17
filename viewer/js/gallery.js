@@ -13,10 +13,11 @@ async function loadGallery() {
   console.log('Loading gallery...');
 
   try {
-    const res = await fetch(`${API_BASE}/universes`);
+    const res = await fetch(`${API_BASE}/universes?is_public=true`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    const universes = await res.json();
+    const data = await res.json();
+    const universes = data.items || [];
     console.log('Loaded universes:', universes);
 
     document.getElementById('loadingState').classList.add('hidden');
@@ -26,23 +27,13 @@ async function loadGallery() {
       return;
     }
 
-    // Load data for each universe to get item counts
-    const universesWithData = await Promise.all(
-      universes.map(async (u) => {
-        try {
-          const dataRes = await fetch(`${API_BASE}/universes/${u.folder}/data`);
-          const data = await dataRes.json();
-          return {
-            ...u,
-            itemCount: data.items?.length || 0,
-            thumbnail: data.items?.[0]?.image || null
-          };
-        } catch (e) {
-          console.error(`Error loading data for ${u.folder}:`, e);
-          return { ...u, itemCount: 0, thumbnail: null };
-        }
-      })
-    );
+    // Use data from the list response
+    const universesWithData = universes.map(u => ({
+      ...u,
+      folder: u.slug, // Map slug to folder
+      itemCount: u.asset_count || 0,
+      thumbnail: u.thumbnail_url || null
+    }));
 
     const grid = document.getElementById('universesGrid');
     grid.innerHTML = universesWithData.map(u => {

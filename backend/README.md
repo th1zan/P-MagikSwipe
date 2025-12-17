@@ -187,10 +187,10 @@ SUPABASE_SERVICE_ROLE_KEY=eyJxxxxxxxxxxxxx
 
 | Type | Modèle |
 |------|--------|
-| LLM (concepts + traductions) | `meta/meta-llama-3-70b-instruct` |
+| LLM (concepts + traductions) | `mistralai/mistral-7b-instruct-v0.1` |
 | Images | `recraft-ai/recraft-v3` |
-| Vidéos | `wan-video/wan-2.1-i2v-480p` |
-| **⭐ Musique multilingue** | `minimax/music-01` |
+| Vidéos | `ali-vilab/i2vgen-xl` |
+| Musique | `meta/musicgen:latest` |
 
 ### Workflow typique
 

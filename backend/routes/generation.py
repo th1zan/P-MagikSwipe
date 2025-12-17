@@ -127,7 +127,7 @@ def apply_concepts(
 @router.post("/{slug}/images", response_model=JobResponse)
 def generate_images(
     slug: str,
-    data: GenerateImagesRequest,
+    data: GenerateImagesRequest = GenerateImagesRequest(),
     db: Session = Depends(get_db)
 ):
     """
@@ -205,7 +205,7 @@ def generate_images(
 @router.post("/{slug}/videos", response_model=JobResponse)
 def generate_videos(
     slug: str,
-    data: GenerateVideosRequest,
+    data: GenerateVideosRequest = GenerateVideosRequest(),
     db: Session = Depends(get_db)
 ):
     """
@@ -336,10 +336,7 @@ def generate_music(
 @router.post("/{slug}/all", response_model=JobResponse)
 def generate_all(
     slug: str,
-    theme: str,
-    count: int = 10,
-    generate_videos: bool = True,
-    generate_music: bool = True,
+    data: GenerateAllRequest,
     db: Session = Depends(get_db)
 ):
     """
@@ -364,10 +361,10 @@ def generate_all(
         # Generate content
         result = generation_service.generate_universe_content(
             slug=slug,
-            theme=theme,
-            concept_count=count,
-            generate_videos=generate_videos,
-            generate_music=generate_music,
+            theme=data.theme,
+            concept_count=data.count,
+            generate_videos=data.generate_videos,
+            generate_music=data.generate_music,
             job_id=job_id
         )
         
@@ -409,10 +406,10 @@ def generate_all(
         return result
     
     # Estimate total steps
-    total = count * 2  # concepts + images
-    if generate_videos:
-        total += count
-    if generate_music:
+    total = data.count * 2  # concepts + images
+    if data.generate_videos:
+        total += data.count
+    if data.generate_music:
         total += 5  # 5 languages
     
     job = job_service.run_async(

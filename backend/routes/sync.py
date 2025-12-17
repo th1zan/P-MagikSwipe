@@ -61,9 +61,12 @@ def sync_pull(
         )
     
     result = sync_service.pull_universe(db, slug, force=data.force)
-    
+
     if not result.success:
-        raise HTTPException(status_code=500, detail=result.message)
+        if "not found" in result.message.lower():
+            raise HTTPException(status_code=404, detail=result.message)
+        else:
+            raise HTTPException(status_code=500, detail=result.message)
     
     return result
 

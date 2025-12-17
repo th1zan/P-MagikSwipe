@@ -3,6 +3,7 @@ import os
 import re
 import json
 import time
+import base64
 import requests
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
@@ -17,12 +18,12 @@ from services.job_service import job_service
 # Supported languages
 LANGUAGES = ["fr", "en", "es", "it", "de"]
 
-# Replicate models
+# Replicate models - using widely available models
 MODELS = {
-    "llm": "meta/meta-llama-3-70b-instruct",
-    "image": "recraft-ai/recraft-v3",
-    "video": "wan-video/wan-2.1-i2v-480p",
-    "music": "minimax/music-01"
+    "llm": "mistralai/mistral-7b-instruct-v0.1",  # Keep for concepts (update later if needed)
+    "image": "stability-ai/sdxl:7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc",  # Stable Diffusion XL
+    "video": "stability-ai/stable-video-diffusion:img2vid-xt-1-1",  # Video from images
+    "music": "meta/musicgen"  # Music generation (use default/latest version)
 }
 
 
@@ -92,25 +93,26 @@ Example output for "farm animals":
 
 Theme: {theme}
 Output:"""
-        
+
+        full_prompt = f"You are a helpful assistant. Output ONLY a valid JSON array of strings, nothing else.\n\n{prompt}"
         output = replicate.run(
             MODELS["llm"],
             input={
-                "prompt": prompt,
+                "prompt": full_prompt,
                 "max_new_tokens": 500,
                 "temperature": 0.7
             }
         )
-        
+
         # Parse response
         response_text = "".join(output)
-        
+
         # Extract JSON array
         match = re.search(r'\[.*?\]', response_text, re.DOTALL)
         if match:
             concepts = json.loads(match.group())
             return concepts[:count]
-        
+
         raise ValueError(f"Failed to parse concepts from LLM response: {response_text}")
     
     # =========================================================================
@@ -223,6 +225,7 @@ Output:"""
         if not self.is_available:
             raise RuntimeError("Replicate API not configured")
         
+        print(f"🎨 Making Replicate API call for image generation: {prompt[:50]}...")
         output = replicate.run(
             MODELS["image"],
             input={
@@ -231,6 +234,7 @@ Output:"""
                 "style": "digital_illustration"
             }
         )
+        print(f"✅ Replicate API call completed for image")
         
         # Download image
         if isinstance(output, list):
@@ -356,14 +360,14 @@ Output:"""
         # Read image
         with open(image_path, "rb") as f:
             image_data = f.read()
-        
+
         output = replicate.run(
             MODELS["video"],
             input={
-                "image": f"data:image/png;base64,{__import__('base64').b64encode(image_data).decode()}",
+                "file": f"data:image/png;base64,{base64.b64encode(image_data).decode()}",
                 "prompt": prompt,
-                "num_frames": int(duration * 24),
-                "fps": 24
+                "max_frames": int(duration * 8),
+                "num_inference_steps": 50
             }
         )
         
@@ -488,22 +492,25 @@ Output:"""
 
             input_params = {
                 "prompt": prompt,
-                "duration": duration
+                "duration": duration,
+                "model": "stereo-large"
             }
 
-            # Use stored lyrics if available and no explicit lyrics provided
+            # Append lyrics to prompt if available
             if stored_lyrics and not lyrics:
-                input_params["lyrics"] = stored_lyrics
+                input_params["prompt"] += f", with lyrics: {stored_lyrics}"
             elif lyrics:
-                input_params["lyrics"] = lyrics
+                input_params["prompt"] += f", with lyrics: {lyrics}"
 
         finally:
             db.close()
         
+        print(f"🎵 Making Replicate API call for music generation: {slug} ({language}) - {prompt[:50]}...")
         output = replicate.run(
             MODELS["music"],
             input=input_params
         )
+        print(f"✅ Replicate API call completed for music: {slug}")
         
         # Download music
         music_url = str(output)

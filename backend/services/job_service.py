@@ -194,11 +194,25 @@ class JobService:
         # Define wrapper
         def run_task():
             try:
+                # Ensure environment variables are available in background thread
+                import os
+                from config import settings
+
+                # Replicate API token for generation jobs
+                if hasattr(settings, 'REPLICATE_API_TOKEN') and settings.REPLICATE_API_TOKEN:
+                    os.environ["REPLICATE_API_TOKEN"] = settings.REPLICATE_API_TOKEN
+
+                # Supabase credentials for sync jobs
+                if hasattr(settings, 'SUPABASE_URL') and settings.SUPABASE_URL:
+                    os.environ["SUPABASE_URL"] = settings.SUPABASE_URL
+                if hasattr(settings, 'SUPABASE_SERVICE_ROLE_KEY') and settings.SUPABASE_SERVICE_ROLE_KEY:
+                    os.environ["SUPABASE_SERVICE_ROLE_KEY"] = settings.SUPABASE_SERVICE_ROLE_KEY
+
                 self.update_job(job_id, status=JobStatus.RUNNING, message="Starting...")
-                
+
                 # Execute task
                 result = task_func(job_id, **kwargs)
-                
+
                 self.update_job(
                     job_id,
                     status=JobStatus.COMPLETED,
@@ -206,9 +220,10 @@ class JobService:
                     message="Completed successfully",
                     result=result
                 )
-                
+
             except Exception as e:
                 error_msg = f"{str(e)}\n{traceback.format_exc()}"
+                print(f"Job {job_id} failed: {error_msg}")  # Debug logging
                 self.update_job(
                     job_id,
                     status=JobStatus.FAILED,

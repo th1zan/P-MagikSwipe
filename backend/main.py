@@ -64,6 +64,10 @@ app.include_router(generation_router, prefix="/api")
 app.include_router(sync_router, prefix="/api")
 app.include_router(jobs_router, prefix="/api")
 
+# Admin router (dangerous operations - use with caution)
+from routes.admin import router as admin_router
+app.include_router(admin_router)
+
 
 # Root endpoint
 @app.get("/")
