@@ -85,8 +85,24 @@ async function openUniverse(folder, name) {
   document.getElementById('universeTitle').textContent = name || folder;
 
   try {
-    const res = await fetch(`${API_BASE}/universes/${folder}/data`);
-    universeData = await res.json();
+    const [universeRes, assetsRes] = await Promise.all([
+      fetch(`${API_BASE}/universes/${folder}`),
+      fetch(`${API_BASE}/universes/${folder}/assets`)
+    ]);
+
+    const universe = await universeRes.json();
+    const assets = await assetsRes.json();
+
+    // Map to expected format
+    universeData = {
+      items: assets.map(a => ({
+        title: a.display_name,
+        image: a.image_name,
+        video: a.image_name.replace('.png', '.mp4'),
+        title_translations: {}
+      }))
+    };
+
     populateContactSheet();
     startMusic();
   } catch (e) {

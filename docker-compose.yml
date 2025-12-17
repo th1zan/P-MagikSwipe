@@ -9,14 +9,14 @@ services:
       - ./storage:/usr/share/nginx/html/storage
     restart: unless-stopped
 
-  # API principale (avec génération intégrée)
-  api:
-    build: ./api
+  # NEW: Backend API v2 (SQLite + Supabase sync)
+  backend:
+    build: ./backend
     ports:
       - "8000:8000"
     volumes:
-      - ./storage:/app/storage
-      - ./api:/app
+      - ./storage:/app/storage          # Storage (SQLite DB + media files)
+      - ./backend:/app                   # Code (hot reload)
     environment:
       - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
       - SUPABASE_URL=${SUPABASE_URL}
@@ -24,3 +24,17 @@ services:
     restart: unless-stopped
     depends_on:
       - studio
+
+  # DEPRECATED: Old API moved to ./OLD_api (can be deleted)
+  # api:
+  #   build: ./OLD_api
+  #   ports:
+  #     - "8001:8000"
+  #   volumes:
+  #     - ./storage:/app/storage
+  #     - ./OLD_api:/app
+  #   environment:
+  #     - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+  #     - SUPABASE_URL=${SUPABASE_URL}
+  #     - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+  #   restart: unless-stopped

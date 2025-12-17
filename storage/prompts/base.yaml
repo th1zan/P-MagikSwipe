@@ -1,8 +1,0 @@
-# Base prompts templates
-# These are the foundational prompts used for universe generation
-
-base:
-   description: "A magical universe of {theme}, filled with wonderful creatures, adventures, and joy for children."
-   image: "A beautiful, colorful illustration of {object} in a magical {theme} setting, perfect for children, vibrant and enchanting."
-   music: "Joyful children's song about the magical {theme}, with lyrics celebrating {words}, bouncy and fun melody."
-   video: "A short animated video of {object} moving happily and magically in a {theme} environment, joyful and child-friendly."

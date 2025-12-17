@@ -1,8 +1,0 @@
-# Dynamic default prompts
-# These can be modified via API and represent current defaults for generation
-
-defaults:
-  objects: "Generate 10 simple objects for children related to the theme {theme}."
-  images: "A beautiful, colorful illustration of {object} in a magical setting, perfect for children, vibrant and enchanting."
-  videos: "A short animated video of {object} moving happily and magically, joyful and child-friendly."
-  music: "Joyful children's song about {theme}, with bouncy melody and fun lyrics."
