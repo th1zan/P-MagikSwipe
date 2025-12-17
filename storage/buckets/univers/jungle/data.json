@@ -1,0 +1,210 @@
+{
+  "items": [
+    {
+      "title": "monkey",
+      "image": "00_monkey.png",
+      "video": "00_monkey_silent.webm",
+      "title_translations": {
+        "fr": "singe",
+        "en": "monkey",
+        "es": "mono",
+        "it": "scimmia",
+        "de": "Affe"
+      }
+    },
+    {
+      "title": "tree",
+      "image": "01_tree.png",
+      "video": "01_tree_silent.webm",
+      "title_translations": {
+        "fr": "arbre",
+        "en": "tree",
+        "es": "árbol",
+        "it": "albero",
+        "de": "Baum"
+      }
+    },
+    {
+      "title": "bird",
+      "image": "02_bird.png",
+      "video": "02_bird_silent.webm",
+      "title_translations": {
+        "fr": "oiseau",
+        "en": "bird",
+        "es": "pájaro",
+        "it": "uccello",
+        "de": "Vogel"
+      }
+    },
+    {
+      "title": "flower",
+      "image": "03_flower.png",
+      "video": "03_flower_silent.webm",
+      "title_translations": {
+        "fr": "fleur",
+        "en": "flower",
+        "es": "flor",
+        "it": "fiore",
+        "de": "Blume"
+      }
+    },
+    {
+      "title": "snake",
+      "image": "04_snake.png",
+      "video": "04_snake_silent.webm",
+      "title_translations": {
+        "fr": "serpent",
+        "en": "snake",
+        "es": "serpiente",
+        "it": "serpente",
+        "de": "Schlange"
+      }
+    },
+    {
+      "title": "lion",
+      "image": "05_lion.png",
+      "video": "05_lion_silent.webm",
+      "title_translations": {
+        "fr": "lion",
+        "en": "lion",
+        "es": "león",
+        "it": "leone",
+        "de": "Löwe"
+      }
+    },
+    {
+      "title": "zebra",
+      "image": "06_zebra.png",
+      "video": "06_zebra_silent.webm",
+      "title_translations": {
+        "fr": "zèbre",
+        "en": "zebra",
+        "es": "cebra",
+        "it": "zebra",
+        "de": "Zebra"
+      }
+    },
+    {
+      "title": "giraffe",
+      "image": "07_giraffe.png",
+      "video": "07_giraffe_silent.webm",
+      "title_translations": {
+        "fr": "girafe",
+        "en": "giraffe",
+        "es": "jirafa",
+        "it": "giraffa",
+        "de": "Giraffe"
+      }
+    },
+    {
+      "title": "elephant",
+      "image": "08_elephant.png",
+      "video": "08_elephant_silent.webm",
+      "title_translations": {
+        "fr": "éléphant",
+        "en": "elephant",
+        "es": "elefante",
+        "it": "elefante",
+        "de": "Elefant"
+      }
+    },
+    {
+      "title": "butterfly",
+      "image": "09_butterfly.png",
+      "video": "09_butterfly_silent.webm",
+      "title_translations": {
+        "fr": "papillon",
+        "en": "butterfly",
+        "es": "mariposa",
+        "it": "farfalla",
+        "de": "Schmetterling"
+      }
+    }
+  ],
+  "translations": {
+    "en": [
+      "monkey",
+      "tree",
+      "bird",
+      "flower",
+      "snake",
+      "lion",
+      "zebra",
+      "giraffe",
+      "elephant",
+      "butterfly"
+    ],
+    "fr": [
+      "singe",
+      "arbre",
+      "oiseau",
+      "fleur",
+      "serpent",
+      "lion",
+      "zèbre",
+      "girafe",
+      "éléphant",
+      "papillon"
+    ],
+    "es": [
+      "mono",
+      "árbol",
+      "pájaro",
+      "flor",
+      "serpiente",
+      "león",
+      "cebra",
+      "jirafa",
+      "elefante",
+      "mariposa"
+    ],
+    "it": [
+      "scimmia",
+      "albero",
+      "uccello",
+      "fiore",
+      "serpente",
+      "leone",
+      "zebra",
+      "giraffa",
+      "elefante",
+      "farfalla"
+    ],
+    "de": [
+      "Affe",
+      "Baum",
+      "Vogel",
+      "Blume",
+      "Schlange",
+      "Löwe",
+      "Zebra",
+      "Giraffe",
+      "Elefant",
+      "Schmetterling"
+    ]
+  },
+  "background_color": "#ffffff",
+  "description": "Jungle",
+  "music_translations": {
+    "fr": {
+      "lyrics": "[Verse]\nDans la jungle, les arbres sont grands\nEt les singes, ils ont des plans\nIls sautent de branche en branche\nComme des acrobates en train de danser\n\n[Chorus]\nLa jungle, oh la jungle\nC'est un endroit où l'on s'amuse\nLes animaux, ils sont nos amis\nEt la vie, elle est une aventure\n\n[Verse]\nDans les arbres, les oiseaux chantent\nIls nous régalent de leur concert\nIls sont si beaux, si colorés\nComme des fleurs dans le soleil levant\n\n[chorus]\n",
+      "prompt": "Joyful children's song about {theme}, bouncy melody, fun lyrics, educational"
+    },
+    "es": {
+      "lyrics": "[Verter]\nEn la selva los árboles son altos.\nY los monos tienen planes.\nSaltan de rama en rama\nComo acróbatas bailando\n\n[Estribillo]\nLa jungla, oh la jungla\nEs un lugar donde nos divertimos.\nLos animales son nuestros amigos.\nY la vida es una aventura\n\n[Verter]\nEn los árboles los pájaros cantan\nNos invitan a su concierto.\nSon tan hermosos, tan coloridos.\nComo flores en el sol naciente\n\n[estribillo]",
+      "prompt": "Canción infantil alegre sobre {tema}, melodía animada, letra divertida, educativa."
+    },
+    "it": {
+      "lyrics": "[Versare]\nNella giungla gli alberi sono alti\nE le scimmie hanno dei piani\nSaltano di ramo in ramo\nCome acrobati che ballano\n\n[Ritornello]\nLa giungla, oh la giungla\nÈ un posto dove ci divertiamo\nGli animali sono nostri amici\nE la vita è un'avventura\n\n[Versare]\nSugli alberi cantano gli uccelli\nCi offrono il loro concerto\nSono così belli, così colorati\nCome i fiori al sole nascente\n\n[coro]",
+      "prompt": "Canzone gioiosa per bambini su {tema}, melodia vivace, testi divertenti, educativi"
+    },
+    "de": {
+      "lyrics": "[Gießen]\nIm Dschungel sind die Bäume hoch\nUnd die Affen haben Pläne\nSie springen von Ast zu Ast\nWie tanzende Akrobaten\n\n[Chor]\nDer Dschungel, oh der Dschungel\nEs ist ein Ort, an dem wir Spaß haben\nTiere sind unsere Freunde\nUnd das Leben ist ein Abenteuer\n\n[Gießen]\nIn den Bäumen singen die Vögel\nSie laden uns zu ihrem Konzert ein\nSie sind so schön, so bunt\nWie Blumen in der aufgehenden Sonne\n\n[Chor]",
+      "prompt": "Fröhliches Kinderlied zum Thema {Thema}, schwungvolle Melodie, lustiger Text, lehrreich"
+    },
+    "en": {
+      "lyrics": "[Pour]\nIn the jungle, the trees are tall\nAnd the monkeys, they have plans\nThey jump from branch to branch\nLike acrobats dancing\n\n[Chorus]\nThe jungle, oh the jungle\nIt's a place where we have fun\nAnimals are our friends\nAnd life is an adventure\n\n[Pour]\nIn the trees, the birds sing\nThey treat us to their concert\nThey are so beautiful, so colorful\nLike flowers in the rising sun\n\n[chorus]",
+      "prompt": "Joyful children's song about {theme}, bouncy melody, fun lyrics, educational"
+    }
+  }
+}
