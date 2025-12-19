@@ -1,8 +1,0 @@
-replicate
-pillow
-requests
-python-dotenv
-pyyaml
-supabase
-deep-translator
-jsonschema
