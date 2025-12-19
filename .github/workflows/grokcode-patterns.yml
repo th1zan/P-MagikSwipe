@@ -73,19 +73,19 @@ jobs:
 
           # Customize analysis prompt
           prompts = {
-              "security-audit": "Effectue un audit de sécurité complet du code. Identifie les vulnérabilités, failles potentielles, pratiques dangereuses.",
-              "performance-review": "Analyse les performances du code. Identifie les goulots d'étranglement, optimisations possibles, problèmes de scalabilité.",
-              "architecture-analysis": "Évalue l'architecture du code. Commentaire sur la structure, séparation des responsabilités, patterns utilisés.",
-              "code-quality-assessment": "Évalue la qualité globale du code. Lisibilité, maintenabilité, conformité aux bonnes pratiques."
+              "security-audit": "Perform a complete security audit of the code. Identify vulnerabilities, potential flaws, dangerous practices.",
+              "performance-review": "Analyze code performance. Identify bottlenecks, optimization opportunities, scalability issues.",
+              "architecture-analysis": "Evaluate code architecture. Comment on structure, separation of responsibilities, patterns used.",
+              "code-quality-assessment": "Evaluate overall code quality. Readability, maintainability, compliance with best practices."
           }
 
-          system_prompt = "Tu es un expert en analyse de code. " + prompts.get(analysis_type, "Fais une analyse générale du code.") + "\n\n"
-          system_prompt += "Fournis un rapport détaillé avec:\n"
-          system_prompt += "- Résumé exécutif\n"
-          system_prompt += "- Points forts\n"
-          system_prompt += "- Points d'amélioration\n"
-          system_prompt += "- Recommandations concrètes\n\n"
-          system_prompt += "Réponds en français."
+          system_prompt = "You are an expert code analyst. " + prompts.get(analysis_type, "Perform a general code analysis.") + "\n\n"
+          system_prompt += "Provide a detailed report with:\n"
+          system_prompt += "- Executive summary\n"
+          system_prompt += "- Strengths\n"
+          system_prompt += "- Areas for improvement\n"
+          system_prompt += "- Concrete recommendations\n\n"
+          system_prompt += "Respond clearly and structured."
 
           response = client.chat.completions.create(
               model="grok-code-fast-1",

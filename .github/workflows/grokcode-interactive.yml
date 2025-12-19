@@ -62,7 +62,7 @@ jobs:
           response = client.chat.completions.create(
               model="grok-code-fast-1",
               messages=[
-                  {"role": "system", "content": "Tu es un assistant IA helpful pour les développeurs. Réponds en français."},
+                  {"role": "system", "content": "You are a helpful AI assistant for developers. Respond clearly and helpfully."},
                   {"role": "user", "content": full_prompt}
               ],
               temperature=0.7,
