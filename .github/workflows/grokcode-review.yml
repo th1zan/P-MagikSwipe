@@ -44,6 +44,8 @@ jobs:
           echo "diff<<EOF" >> $GITHUB_OUTPUT
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Get PR details
         id: pr
@@ -52,6 +54,8 @@ jobs:
           echo "pr_data<<EOF" >> $GITHUB_OUTPUT
           echo "$PR_JSON" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Analyze with GrokCode
         env:
