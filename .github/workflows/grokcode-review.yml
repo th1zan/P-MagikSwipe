@@ -1,0 +1,119 @@
+name: GrokCode Code Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: number
+      analysis_type:
+        description: 'Type of analysis'
+        required: false
+        default: 'general'
+        type: choice
+        options:
+          - general
+          - security
+          - performance
+          - code-quality
+
+jobs:
+  grokcode-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install OpenAI SDK
+        run: pip install openai
+
+      - name: Get PR diff
+        id: diff
+        run: |
+          DIFF=$(gh pr diff ${{ inputs.pr_number }})
+          echo "diff<<EOF" >> $GITHUB_OUTPUT
+          echo "$DIFF" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Get PR details
+        id: pr
+        run: |
+          PR_JSON=$(gh pr view ${{ inputs.pr_number }} --json title,body)
+          echo "pr_data<<EOF" >> $GITHUB_OUTPUT
+          echo "$PR_JSON" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Analyze with GrokCode
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+        run: |
+          python - <<'EOF'
+          import os
+          import json
+          from openai import OpenAI
+
+          client = OpenAI(
+              api_key=os.getenv("XAI_API_KEY"),
+              base_url="https://api.x.ai/v1"
+          )
+
+          analysis_type = "${{ inputs.analysis_type }}"
+          diff_content = """${{ steps.diff.outputs.diff }}"""
+          pr_data = json.loads("""${{ steps.pr.outputs.pr_data }}""")
+
+          # Customize prompt based on analysis type
+          prompts = {
+              "security": "Analyse ce code pour les vulnérabilités de sécurité, injections SQL, XSS, etc.",
+              "performance": "Examine ce code pour les problèmes de performance, optimisations possibles.",
+              "code-quality": "Vérifie la qualité du code, bonnes pratiques, lisibilité, maintenabilité.",
+              "general": "Fais une revue générale du code, suggère des améliorations."
+          }
+
+          system_prompt = f"""Tu es un expert en revue de code. {prompts.get(analysis_type, prompts['general'])}
+
+          PR: {pr_data['title']}
+          Description: {pr_data.get('body', 'N/A')}
+
+          Réponds en français de manière claire et structurée."""
+
+          response = client.chat.completions.create(
+              model="grok-code-fast-1",
+              messages=[
+                  {"role": "system", "content": system_prompt},
+                  {"role": "user", "content": f"Analyse ces changements :\n\n{diff_content}"}
+              ],
+              temperature=0.5,
+              max_tokens=2000
+          )
+
+          review = response.choices[0].message.content
+
+          with open("grok_review.md", "w") as f:
+              f.write(f"# Revue GrokCode ({analysis_type})\n\n{review}")
+
+          print("✅ Analyse terminée")
+          EOF
+
+      - name: Comment on PR
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const review = fs.readFileSync('grok_review.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🤖 **Revue GrokCode (${{ inputs.analysis_type }})**\n\n${review}`
+            });

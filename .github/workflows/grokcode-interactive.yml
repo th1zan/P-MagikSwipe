@@ -1,0 +1,92 @@
+name: GrokCode Interactive
+
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: 'Your question for GrokCode'
+        required: true
+        type: string
+      context_file:
+        description: 'File to include as context'
+        required: false
+        type: string
+
+jobs:
+  grokcode-query:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install OpenAI SDK
+        run: pip install openai
+
+      - name: Prepare context
+        if: inputs.context_file != ''
+        run: |
+          if [ -f "${{ inputs.context_file }}" ]; then
+            CONTEXT=$(cat "${{ inputs.context_file }}")
+            echo "CONTEXT<<EOF" >> $GITHUB_ENV
+            echo "$CONTEXT" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+
+      - name: Query GrokCode
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+        run: |
+          python - <<'EOF'
+          import os
+          from openai import OpenAI
+
+          client = OpenAI(
+              api_key=os.getenv("XAI_API_KEY"),
+              base_url="https://api.x.ai/v1"
+          )
+
+          query = """${{ inputs.query }}"""
+          context = os.getenv("CONTEXT", "")
+
+          full_prompt = f"Question: {query}"
+          if context:
+              full_prompt += f"\n\nContexte:\n{context}"
+
+          response = client.chat.completions.create(
+              model="grok-code-fast-1",
+              messages=[
+                  {"role": "system", "content": "Tu es un assistant IA helpful pour les développeurs. Réponds en français."},
+                  {"role": "user", "content": full_prompt}
+              ],
+              temperature=0.7,
+              max_tokens=1500
+          )
+
+          answer = response.choices[0].message.content
+
+          with open("grok_response.md", "w") as f:
+              f.write(f"# Réponse GrokCode\n\n**Question:** {query}\n\n**Réponse:**\n\n{answer}")
+
+          print("✅ Réponse générée")
+          EOF
+
+      - name: Create GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const response = fs.readFileSync('grok_response.md', 'utf8');
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "🤖 GrokCode: ${{ inputs.query }}",
+              body: response,
+              labels: ['ai-generated', 'question']
+            });
