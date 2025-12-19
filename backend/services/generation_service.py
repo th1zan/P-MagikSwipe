@@ -18,12 +18,12 @@ from services.job_service import job_service
 # Supported languages
 LANGUAGES = ["fr", "en", "es", "it", "de"]
 
-# Replicate models - using widely available models
+# Replicate models - updated models
 MODELS = {
-    "llm": "mistralai/mistral-7b-instruct-v0.1",  # Keep for concepts (update later if needed)
-    "image": "stability-ai/sdxl:7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc",  # Stable Diffusion XL
-    "video": "stability-ai/stable-video-diffusion:img2vid-xt-1-1",  # Video from images
-    "music": "meta/musicgen"  # Music generation (use default/latest version)
+    "llm": "meta/llama-2-70b-chat",  # For generating concepts/object names
+    "image": "recraft-ai/recraft-v3",  # High-quality image generation
+    "video": "wan-video/wan-2.2-i2v-fast",  # Fast image-to-video generation
+    "music": "minimax/music-1.5"  # Music generation with vocals
 }
 
 
@@ -80,6 +80,8 @@ class GenerationService:
         if not self.is_available:
             raise RuntimeError("Replicate API not configured")
         
+        system_prompt = """You are a helpful assistant that generates child-friendly concepts. Output ONLY a valid JSON array of strings, nothing else."""
+
         prompt = f"""Generate exactly {count} simple, child-friendly concepts for the theme: "{theme}".
 
 Rules:
@@ -94,11 +96,11 @@ Example output for "farm animals":
 Theme: {theme}
 Output:"""
 
-        full_prompt = f"You are a helpful assistant. Output ONLY a valid JSON array of strings, nothing else.\n\n{prompt}"
         output = replicate.run(
             MODELS["llm"],
             input={
-                "prompt": full_prompt,
+                "system_prompt": system_prompt,
+                "prompt": prompt,
                 "max_new_tokens": 500,
                 "temperature": 0.7
             }
@@ -364,9 +366,9 @@ Output:"""
         output = replicate.run(
             MODELS["video"],
             input={
-                "file": f"data:image/png;base64,{base64.b64encode(image_data).decode()}",
+                "image": f"data:image/png;base64,{base64.b64encode(image_data).decode()}",
                 "prompt": prompt,
-                "max_frames": int(duration * 8),
+                "num_frames": int(duration * 8),
                 "num_inference_steps": 50
             }
         )
@@ -484,28 +486,31 @@ Output:"""
                     stored_lyrics = mp.lyrics
                     break
 
-            # Use stored prompt or fallback to style
-            if stored_prompt:
-                prompt = stored_prompt
+            # Use stored lyrics or provided lyrics
+            if lyrics:
+                music_lyrics = lyrics
+            elif stored_lyrics:
+                music_lyrics = stored_lyrics
             else:
-                prompt = f"{style}, instrumental background music for {univers.name}"
+                music_lyrics = ""
+
+            # Use stored prompt for style or fallback
+            if stored_prompt:
+                style_description = stored_prompt
+            else:
+                style_description = f"{style}, instrumental background music for {univers.name}"
 
             input_params = {
-                "prompt": prompt,
-                "duration": duration,
-                "model": "stereo-large"
+                "lyrics": music_lyrics,
+                "reference_audio": None,  # Optional: can add reference audio later
+                "style_strength": 0.8,  # Default style strength
+                "duration": duration
             }
-
-            # Append lyrics to prompt if available
-            if stored_lyrics and not lyrics:
-                input_params["prompt"] += f", with lyrics: {stored_lyrics}"
-            elif lyrics:
-                input_params["prompt"] += f", with lyrics: {lyrics}"
 
         finally:
             db.close()
         
-        print(f"🎵 Making Replicate API call for music generation: {slug} ({language}) - {prompt[:50]}...")
+        print(f"🎵 Making Replicate API call for music generation: {slug} ({language}) - {music_lyrics[:50] if music_lyrics else style_description[:50]}...")
         output = replicate.run(
             MODELS["music"],
             input=input_params

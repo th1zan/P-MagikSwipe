@@ -352,7 +352,7 @@ class GenerateVideosRequest(BaseModel):
 class GenerateMusicRequest(BaseModel):
     """Request to generate background music."""
     language: LanguageEnum = LanguageEnum.FR
-    style: Optional[str] = "children friendly, playful"
+    style: str = Field(min_length=10, max_length=300, default="children friendly, playful")
 
 
 class GenerateAllRequest(BaseModel):

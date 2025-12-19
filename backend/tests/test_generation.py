@@ -8,6 +8,7 @@ class TestGenerationConcepts:
     """Tests génération de concepts (avec mock pour éviter coûts)."""
 
     @patch('services.generation_service.replicate.run')
+    @patch('config.settings.REPLICATE_API_TOKEN', 'fake_token')
     def test_generate_concepts_success(self, mock_replicate, client, test_universe):
         """Test génération de concepts réussie (avec mock)."""
         slug = test_universe["slug"]
@@ -58,6 +59,7 @@ class TestGenerationMusic:
     """Tests génération de musique (avec mock pour éviter coûts)."""
 
     @patch('services.generation_service.replicate.run')
+    @patch('config.settings.REPLICATE_API_TOKEN', 'fake_token')
     def test_generate_music_success(self, mock_replicate, client, universe_with_music_prompts):
         """Test génération de musique réussie (avec mock)."""
         slug = universe_with_music_prompts["universe"]["slug"]
@@ -106,6 +108,7 @@ class TestGenerationImages:
     """Tests génération d'images (avec mock pour éviter coûts)."""
 
     @patch('services.generation_service.replicate.run')
+    @patch('config.settings.REPLICATE_API_TOKEN', 'fake_token')
     def test_generate_images_success(self, mock_replicate, client, test_universe):
         """Test génération d'images réussie (avec mock)."""
         slug = test_universe["slug"]
@@ -137,6 +140,7 @@ class TestGenerationImages:
             assert "type" in data
             assert data["type"] == "generate_images"
 
+    @patch('config.settings.REPLICATE_API_TOKEN', 'fake_token')
     def test_generate_images_no_assets(self, client, test_universe):
         """Test génération d'images sans assets."""
         slug = test_universe["slug"]
@@ -150,6 +154,7 @@ class TestGenerationVideos:
     """Tests génération de vidéos (avec mock pour éviter coûts)."""
 
     @patch('services.generation_service.replicate.run')
+    @patch('config.settings.REPLICATE_API_TOKEN', 'fake_token')
     def test_generate_videos_success(self, mock_replicate, client, test_universe):
         """Test génération de vidéos réussie (avec mock)."""
         slug = test_universe["slug"]
@@ -173,6 +178,7 @@ class TestGenerationAll:
     """Tests génération complète (avec mock pour éviter coûts)."""
 
     @patch('services.generation_service.replicate.run')
+    @patch('config.settings.REPLICATE_API_TOKEN', 'fake_token')
     def test_generate_all_success(self, mock_replicate, client, test_universe):
         """Test génération complète réussie (avec mock)."""
         # Mock de multiples appels Replicate

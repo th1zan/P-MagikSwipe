@@ -20,7 +20,7 @@ async function loadUniversesList() {
     const res = await fetch(`${API_BASE}/universes`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const universes = data.items || [];
+    const universes = data.items || data || [];
     const select = document.getElementById('universeSelect');
     select.innerHTML = '<option value="">Choose a universe...</option>';
     universes.forEach(u => {
@@ -387,12 +387,13 @@ async function createUniverse() {
     });
 
     if (res.ok) {
+      const universeData = await res.json();
       showToast('Universe created successfully!', 'success');
       closeCreateModal();
       loadUniversesList();
-      // Auto-select the new universe
-      document.getElementById('universeSelect').value = name.toLowerCase().replace(' ', '_');
-      loadUniverse(name.toLowerCase().replace(' ', '_'));
+      // Auto-select the new universe using the slug from backend response
+      document.getElementById('universeSelect').value = universeData.slug;
+      loadUniverse(universeData.slug);
     } else {
       throw new Error('Failed to create universe');
     }
@@ -603,7 +604,7 @@ async function generateAllImages() {
   try {
     await runJobWithUI({
       endpoint: `/generate/${currentUniverse}/images`,
-      params: { async: true },
+      params: {},
       buttonElement: event?.target,
       successMessage: 'All images generated!',
       onComplete: () => {
@@ -621,7 +622,7 @@ async function generateAllVideos() {
   try {
     await runJobWithUI({
       endpoint: `/generate/${currentUniverse}/videos`,
-      params: { async: true },
+      params: {},
       buttonElement: event?.target,
       successMessage: 'All videos generated!',
       onComplete: () => {
@@ -733,7 +734,7 @@ async function regenerateAsset(type, index) {
   try {
     await runJobWithUI({
       endpoint: `/generate/${currentUniverse}/${type}s`,
-      params: { asset_ids: [assetId], async: true },
+      params: { asset_ids: [assetId] },
       buttonElement: event?.target,
       successMessage: `${type.charAt(0).toUpperCase() + type.slice(1)} regenerated!`,
       onComplete: () => {
@@ -832,7 +833,7 @@ async function translateAllToLang(lang) {
 
     // Traduire le prompt si présent
     if (frPrompt.trim()) {
-      const promptRes = await fetch(`${API_BASE}/translate-text`, {
+      const promptRes = await fetch(`${API_BASE}/generate/translate-text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: frPrompt, source: 'fr', target: lang })

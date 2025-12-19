@@ -431,3 +431,67 @@ def generate_all(
         message=job.message,
         created_at=job.created_at
     )
+
+
+# =============================================================================
+# TRANSLATION ENDPOINTS
+# =============================================================================
+
+@router.post("/{slug}/lyrics/{language}")
+def translate_lyrics(
+    slug: str,
+    language: str,
+    data: dict,  # { lyrics: string }
+    db: Session = Depends(get_db)
+):
+    """
+    Translate song lyrics to a specific language.
+    
+    Used by the frontend for music lyrics translation.
+    """
+    univers = db.query(Univers).filter(Univers.slug == slug).first()
+    
+    if not univers:
+        raise HTTPException(status_code=404, detail=f"Universe '{slug}' not found")
+    
+    if not generation_service.is_available:
+        raise HTTPException(status_code=503, detail="AI generation not available")
+    
+    if "lyrics" not in data:
+        raise HTTPException(status_code=400, detail="Missing 'lyrics' field")
+    
+    try:
+        translated = generation_service.translate_text(
+            text=data["lyrics"],
+            source_lang="fr",  # Assume French source
+            target_lang=language
+        )
+        return {"lyrics": translated}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
+
+
+@router.post("/translate-text")
+def translate_text(data: dict):
+    """
+    General text translation endpoint.
+    
+    Used by frontend for translating music prompts and other text.
+    """
+    if not generation_service.is_available:
+        raise HTTPException(status_code=503, detail="AI generation not available")
+    
+    required_fields = ["text", "source", "target"]
+    for field in required_fields:
+        if field not in data:
+            raise HTTPException(status_code=400, detail=f"Missing '{field}' field")
+    
+    try:
+        translated = generation_service.translate_text(
+            text=data["text"],
+            source_lang=data["source"],
+            target_lang=data["target"]
+        )
+        return {"translated": translated}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")

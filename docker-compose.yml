@@ -21,6 +21,7 @@ services:
       - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - STORAGE_PATH=/app/storage
     restart: unless-stopped
     depends_on:
       - studio
