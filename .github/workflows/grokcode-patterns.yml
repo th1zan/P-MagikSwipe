@@ -1,0 +1,121 @@
+name: GrokCode Pattern Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      analysis_type:
+        description: 'Type of analysis'
+        required: true
+        type: choice
+        options:
+          - security-audit
+          - performance-review
+          - architecture-analysis
+          - code-quality-assessment
+      file_pattern:
+        description: 'File pattern to analyze'
+        required: false
+        default: '**/*.py'
+        type: string
+
+jobs:
+  pattern-analysis:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install OpenAI SDK
+        run: pip install openai
+
+      - name: Gather codebase files
+        run: |
+          mkdir -p analysis_input
+          find . -name "${{ inputs.file_pattern }}" -type f | head -10 | while read file; do
+            cp "$file" "analysis_input/$(basename "$file")"
+          done
+
+          # Create combined code file
+          echo "# Codebase Analysis" > analysis_input/combined_code.txt
+          echo "Pattern: ${{ inputs.file_pattern }}" >> analysis_input/combined_code.txt
+          echo "Files found: $(ls analysis_input/*.py 2>/dev/null | wc -l)" >> analysis_input/combined_code.txt
+
+          for file in analysis_input/*.py; do
+            if [ -f "$file" ]; then
+              echo -e "\n## $(basename "$file")" >> analysis_input/combined_code.txt
+              cat "$file" >> analysis_input/combined_code.txt
+            fi
+          done
+
+      - name: Analyze with GrokCode
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+        run: |
+          python - <<'EOF'
+          import os
+          from openai import OpenAI
+
+          client = OpenAI(
+              api_key=os.getenv("XAI_API_KEY"),
+              base_url="https://api.x.ai/v1"
+          )
+
+          analysis_type = "${{ inputs.analysis_type }}"
+
+          with open("analysis_input/combined_code.txt", "r") as f:
+              codebase = f.read()
+
+          # Customize analysis prompt
+          prompts = {
+              "security-audit": "Effectue un audit de sécurité complet du code. Identifie les vulnérabilités, failles potentielles, pratiques dangereuses.",
+              "performance-review": "Analyse les performances du code. Identifie les goulots d'étranglement, optimisations possibles, problèmes de scalabilité.",
+              "architecture-analysis": "Évalue l'architecture du code. Commentaire sur la structure, séparation des responsabilités, patterns utilisés.",
+              "code-quality-assessment": "Évalue la qualité globale du code. Lisibilité, maintenabilité, conformité aux bonnes pratiques."
+          }
+
+          system_prompt = f"""Tu es un expert en analyse de code. {prompts.get(analysis_type, "Fais une analyse générale du code.")}
+
+          Fournis un rapport détaillé avec:
+          - Résumé exécutif
+          - Points forts
+          - Points d'amélioration
+          - Recommandations concrètes
+
+          Réponds en français."""
+
+          response = client.chat.completions.create(
+              model="grok-code-fast-1",
+              messages=[
+                  {"role": "system", "content": system_prompt},
+                  {"role": "user", "content": f"Analyse ce code :\n\n{codebase[:10000]}"}
+              ],
+              temperature=0.3,
+              max_tokens=3000
+          )
+
+          analysis = response.choices[0].message.content
+
+          # Save to reports directory
+          os.makedirs("reports", exist_ok=True)
+          filename = f"reports/grokcode-{analysis_type}-{os.popen('date +%Y%m%d-%H%M%S').read().strip()}.md"
+
+          with open(filename, "w") as f:
+              f.write(f"# Analyse GrokCode: {analysis_type.replace('-', ' ').title()}\n\n")
+              f.write(f"**Date:** {os.popen('date').read().strip()}\n")
+              f.write(f"**Pattern analysé:** ${{ inputs.file_pattern }}\n\n")
+              f.write(analysis)
+
+          print(f"✅ Analyse sauvegardée: {filename}")
+          EOF
+
+      - name: Upload analysis report
+        uses: actions/upload-artifact@v4
+        with:
+          name: grokcode-analysis
+          path: reports/
