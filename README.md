@@ -1,5 +1,7 @@
 # MagikSwipe - AI-Powered Children's Learning App
 
+*Last updated: December 19, 2025*
+
 MagikSwipe is an innovative web application designed for children's learning, powered by artificial intelligence. It allows educators and parents to create personalized thematic universes (animals, space, cars, etc.) and automatically generate multimedia content adapted for children.
 
 ## 🌟 Key Features
