@@ -41,9 +41,8 @@ jobs:
         id: diff
         run: |
           DIFF=$(gh pr diff ${{ inputs.pr_number }})
-          echo "diff<<EOF" >> $GITHUB_OUTPUT
-          echo "$DIFF" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          DIFF_B64=$(echo "$DIFF" | base64 -w 0)
+          echo "diff_b64=$DIFF_B64" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -64,6 +63,7 @@ jobs:
           python - <<'EOF'
           import os
           import json
+          import base64
           from openai import OpenAI
 
           client = OpenAI(
@@ -72,7 +72,8 @@ jobs:
           )
 
           analysis_type = "${{ inputs.analysis_type }}"
-          diff_content = '${{ steps.diff.outputs.diff }}'
+          diff_b64 = "${{ steps.diff.outputs.diff_b64 }}"
+          diff_content = base64.b64decode(diff_b64).decode('utf-8')
           pr_data = json.loads('${{ steps.pr.outputs.pr_data }}')
 
           # Customize prompt based on analysis type
