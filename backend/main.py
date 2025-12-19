@@ -17,6 +17,9 @@ from config import settings
 from database import init_db
 from routes import universes_router, generation_router, sync_router, jobs_router
 
+# Version for semantic release
+version = "2.0.0"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,7 +41,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="MagikSwipe Backend",
     description="Backend API for MagikSwipe - AI-powered children's learning app",
-    version="2.0.0",
+    version=version,
     lifespan=lifespan
 )
 
