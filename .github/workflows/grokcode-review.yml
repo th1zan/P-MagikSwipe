@@ -83,12 +83,10 @@ jobs:
               "general": "Fais une revue générale du code, suggère des améliorations."
           }
 
-          system_prompt = f"""Tu es un expert en revue de code. {prompts.get(analysis_type, prompts['general'])}
-
-          PR: {pr_data['title']}
-          Description: {pr_data.get('body', 'N/A')}
-
-          Réponds en français de manière claire et structurée."""
+          system_prompt = "Tu es un expert en revue de code. " + prompts.get(analysis_type, prompts['general']) + "\n\n"
+          system_prompt += f"PR: {pr_data['title']}\n"
+          system_prompt += f"Description: {pr_data.get('body', 'N/A')}\n\n"
+          system_prompt += "Réponds en français de manière claire et structurée."
 
           response = client.chat.completions.create(
               model="grok-code-fast-1",

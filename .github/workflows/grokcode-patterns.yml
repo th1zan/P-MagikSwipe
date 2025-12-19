@@ -79,15 +79,13 @@ jobs:
               "code-quality-assessment": "Évalue la qualité globale du code. Lisibilité, maintenabilité, conformité aux bonnes pratiques."
           }
 
-          system_prompt = f"""Tu es un expert en analyse de code. {prompts.get(analysis_type, "Fais une analyse générale du code.")}
-
-          Fournis un rapport détaillé avec:
-          - Résumé exécutif
-          - Points forts
-          - Points d'amélioration
-          - Recommandations concrètes
-
-          Réponds en français."""
+          system_prompt = "Tu es un expert en analyse de code. " + prompts.get(analysis_type, "Fais une analyse générale du code.") + "\n\n"
+          system_prompt += "Fournis un rapport détaillé avec:\n"
+          system_prompt += "- Résumé exécutif\n"
+          system_prompt += "- Points forts\n"
+          system_prompt += "- Points d'amélioration\n"
+          system_prompt += "- Recommandations concrètes\n\n"
+          system_prompt += "Réponds en français."
 
           response = client.chat.completions.create(
               model="grok-code-fast-1",
