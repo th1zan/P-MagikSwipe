@@ -72,8 +72,8 @@ jobs:
           )
 
           analysis_type = "${{ inputs.analysis_type }}"
-          diff_content = """${{ steps.diff.outputs.diff }}"""
-          pr_data = json.loads("""${{ steps.pr.outputs.pr_data }}""")
+          diff_content = '${{ steps.diff.outputs.diff }}'
+          pr_data = json.loads('${{ steps.pr.outputs.pr_data }}')
 
           # Customize prompt based on analysis type
           prompts = {
